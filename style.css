@@ -23,11 +23,32 @@ body {
     position: relative;
 }
 
+#high-score-box {
+    position: absolute;
+    top: 28px;
+    left: 28px;
+    font-size: 0.95em;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+    color: #444;
+    background: rgba(255, 255, 255, 0.75);
+    padding: 8px 16px;
+    border-radius: 20px;
+    backdrop-filter: blur(6px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    z-index: 10;
+}
+
+#high-score {
+    color: #e53935;
+    margin-left: 4px;
+}
+
 #score {
     position: absolute;
-    top: 30px;
-    right: 30px;
-    font-size: 2.4em;
+    top: 25px;
+    right: 32px;
+    font-size: 2.6em;
     font-weight: 900;
     color: #222;
     z-index: 10;
@@ -35,7 +56,7 @@ body {
 }
 
 #introduction {
-    width: 220px;
+    width: 240px;
     position: absolute;
     top: 15%;
     font-weight: 600;
@@ -44,11 +65,12 @@ body {
     color: #333;
     pointer-events: none;
     transition: opacity 1.5s ease-out;
-    background: rgba(255, 255, 255, 0.7);
-    padding: 10px 14px;
+    background: rgba(255, 255, 255, 0.75);
+    padding: 10px 18px;
     border-radius: 20px;
-    backdrop-filter: blur(4px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    backdrop-filter: blur(6px);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+    z-index: 10;
 }
 
 #restart {
@@ -91,81 +113,21 @@ body {
     padding: 6px 16px;
     border-radius: 12px;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    z-index: 10;
 }
 
-#youtube,
-#youtube-card {
-    display: none;
-}
-
-@media (min-height: 425px) {
-    /** Youtube badge button **/
-    #youtube {
-        z-index: 20;
-        display: block;
-        width: 70px;
-        height: 50px;
-        position: absolute;
-        bottom: 20px;
-        left: 20px;
-        background: #ff0000;
-        border-radius: 50% / 14%;
-        transform: scale(0.8);
-        transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
-    }
-
-    #youtube:hover,
-    #youtube:focus {
-        transform: scale(0.92);
-    }
-
-    #youtube::before {
-        content: "";
-        display: block;
-        position: absolute;
-        top: 7.5%;
-        left: -6%;
-        width: 112%;
-        height: 85%;
-        background: #ff0000;
-        border-radius: 10% / 50%;
-    }
-
-    #youtube::after {
-        content: "";
-        display: block;
-        position: absolute;
-        top: 15px;
-        left: 28px;
-        width: 25px;
-        height: 20px;
-        border: 10px solid transparent;
-        box-sizing: border-box;
-        border-left: 18px solid white;
-    }
-
-    #youtube span {
-        font-size: 0;
-        position: absolute;
-        width: 0;
-        height: 0;
-        overflow: hidden;
-    }
-
-    #youtube:hover + #youtube-card {
-        display: block;
-        position: absolute;
-        bottom: 18px;
-        left: 14px;
-        padding: 16px 20px 16px 95px;
-        width: 260px;
-        background-color: white;
-        border-radius: 12px;
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-        font-size: 0.85em;
-        line-height: 1.4;
-        color: #333;
-        z-index: 15;
-    }
+#game-brand {
+    position: absolute;
+    bottom: 22px;
+    left: 28px;
+    font-size: 0.8em;
+    font-weight: 800;
+    letter-spacing: 2px;
+    color: #4a5c2b;
+    background: rgba(255, 255, 255, 0.6);
+    padding: 6px 14px;
+    border-radius: 14px;
+    backdrop-filter: blur(4px);
+    pointer-events: none;
+    z-index: 10;
 }

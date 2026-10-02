@@ -1,25 +1,26 @@
 /*
   Stick Hero / Stick Man Game
-  Created with HTML5 Canvas & Vanilla JavaScript
+  Created and Maintained by Sunil (https://github.com/Sunil56224972)
+  HTML5 Canvas & Vanilla JavaScript Arcade Game
 */
 
-// Extend the base functionality of JavaScript
+// Extend base functionality
 Array.prototype.last = function () {
     return this[this.length - 1];
 };
 
-// A sinus function that accepts degrees instead of radians
+// Trigonometric sinus in degrees
 Math.sinus = function (degree) {
     return Math.sin((degree / 180) * Math.PI);
 };
 
-// Game data
+// Game state variables
 let phase = "waiting"; // waiting | stretching | turning | walking | transitioning | falling
-let lastTimestamp; // The timestamp of the previous requestAnimationFrame cycle
+let lastTimestamp;
 
-let heroX; // Changes when moving forward
-let heroY; // Only changes when falling
-let sceneOffset; // Moves the whole game
+let heroX;
+let heroY;
+let sceneOffset;
 
 let platforms = [];
 let sticks = [];
@@ -28,15 +29,14 @@ let trees = [];
 let score = 0;
 let highScore = parseInt(localStorage.getItem("stickman_high_score") || "0", 10);
 
-// Configuration
+// Canvas configuration
 const canvasWidth = 375;
 const canvasHeight = 375;
 const platformHeight = 100;
-const heroDistanceFromEdge = 10; // While waiting
-const paddingX = 100; // The waiting position of the hero in from the original canvas size
+const heroDistanceFromEdge = 10;
+const paddingX = 100;
 const perfectAreaSize = 10;
 
-// The background moves slower than the hero
 const backgroundSpeedMultiplier = 0.2;
 
 const hill1BaseHeight = 100;
@@ -46,14 +46,14 @@ const hill2BaseHeight = 70;
 const hill2Amplitude = 20;
 const hill2Stretch = 0.5;
 
-const stretchingSpeed = 4; // Milliseconds it takes to draw a pixel
-const turningSpeed = 4; // Milliseconds it takes to turn a degree
+const stretchingSpeed = 4;
+const turningSpeed = 4;
 const walkingSpeed = 4;
 const transitioningSpeed = 2;
 const fallingSpeed = 2;
 
-const heroWidth = 17; // 24
-const heroHeight = 30; // 40
+const heroWidth = 17;
+const heroHeight = 30;
 
 const canvas = document.getElementById("game");
 canvas.width = window.innerWidth;
@@ -65,11 +65,14 @@ const introductionElement = document.getElementById("introduction");
 const perfectElement = document.getElementById("perfect");
 const restartButton = document.getElementById("restart");
 const scoreElement = document.getElementById("score");
+const highScoreElement = document.getElementById("high-score");
 
-// Initialize layout
+if (highScoreElement) {
+    highScoreElement.innerText = highScore;
+}
+
 resetGame();
 
-// Resets game variables and layouts but does not start the game
 function resetGame() {
     phase = "waiting";
     lastTimestamp = undefined;
@@ -80,8 +83,10 @@ function resetGame() {
     perfectElement.style.opacity = 0;
     restartButton.style.display = "none";
     scoreElement.innerText = score;
+    if (highScoreElement) {
+        highScoreElement.innerText = highScore;
+    }
 
-    // The first platform is always the same
     platforms = [{ x: 50, w: 50 }];
     generatePlatform();
     generatePlatform();
@@ -138,9 +143,9 @@ function generatePlatform() {
     platforms.push({ x, w });
 }
 
-// User Interaction handlers (Mouse, Touch, Keyboard)
+// User Interaction controls
 function startStretching(event) {
-    if (event.target === restartButton || (event.target && event.target.closest('#youtube'))) {
+    if (event.target === restartButton) {
         return;
     }
     if (phase === "waiting") {
@@ -178,7 +183,7 @@ window.addEventListener("mousedown", startStretching);
 window.addEventListener("mouseup", stopStretching);
 
 window.addEventListener("touchstart", function (event) {
-    if (event.target !== restartButton && !event.target.closest('#youtube')) {
+    if (event.target !== restartButton) {
         startStretching(event);
     }
 }, { passive: true });
@@ -202,7 +207,7 @@ restartButton.addEventListener("click", function (event) {
     restartButton.style.display = "none";
 });
 
-// The main game loop
+// Animation loop
 function animate(timestamp) {
     if (!lastTimestamp) {
         lastTimestamp = timestamp;
@@ -227,9 +232,13 @@ function animate(timestamp) {
                 if (nextPlatform) {
                     score += perfectHit ? 2 : 1;
                     scoreElement.innerText = score;
+
                     if (score > highScore) {
                         highScore = score;
                         localStorage.setItem("stickman_high_score", highScore.toString());
+                        if (highScoreElement) {
+                            highScoreElement.innerText = highScore;
+                        }
                     }
 
                     if (perfectHit) {
@@ -328,13 +337,11 @@ function draw() {
 
     drawBackground();
 
-    // Center main canvas area to the middle of the screen
     ctx.translate(
         (window.innerWidth - canvasWidth) / 2 - sceneOffset,
         (window.innerHeight - canvasHeight) / 2
     );
 
-    // Draw scene
     drawPlatforms();
     drawHero();
     drawSticks();
@@ -396,7 +403,7 @@ function drawHero() {
     ctx.arc(5, -7, 3, 0, Math.PI * 2, false);
     ctx.fill();
 
-    // Red Bandanna / Headband
+    // Red Headband
     ctx.fillStyle = "#e53935";
     ctx.fillRect(-heroWidth / 2 - 1, -12, heroWidth + 2, 4.5);
     ctx.beginPath();

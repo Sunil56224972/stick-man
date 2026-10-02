@@ -140,6 +140,12 @@ Contributions, bug reports, and suggestions are welcome. Feel free to open an is
 
 ---
 
+## Author
+
+Developed and maintained by **[Sunil](https://github.com/Sunil56224972)**.
+
+---
+
 ## License
 
 This project is licensed under the MIT License.

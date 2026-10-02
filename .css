@@ -2,11 +2,16 @@ html,
 body {
     height: 100%;
     margin: 0;
+    overflow: hidden;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: manipulation;
 }
 
 body {
-    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
     cursor: pointer;
+    background-color: #FEF1E1;
 }
 
 .container {
@@ -14,25 +19,58 @@ body {
     justify-content: center;
     align-items: center;
     height: 100%;
+    width: 100%;
+    position: relative;
+}
+
+#high-score-box {
+    position: absolute;
+    top: 28px;
+    left: 28px;
+    font-size: 0.95em;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+    color: #444;
+    background: rgba(255, 255, 255, 0.75);
+    padding: 8px 16px;
+    border-radius: 20px;
+    backdrop-filter: blur(6px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    z-index: 10;
+}
+
+#high-score {
+    color: #e53935;
+    margin-left: 4px;
 }
 
 #score {
     position: absolute;
-    top: 30px;
-    right: 30px;
-    font-size: 2em;
+    top: 25px;
+    right: 32px;
+    font-size: 2.6em;
     font-weight: 900;
+    color: #222;
+    z-index: 10;
+    text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.8);
 }
 
 #introduction {
-    width: 200px;
-    height: 150px;
+    width: 240px;
     position: absolute;
+    top: 15%;
     font-weight: 600;
-    font-size: 0.8em;
-    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 0.9em;
     text-align: center;
-    transition: opacity 2s;
+    color: #333;
+    pointer-events: none;
+    transition: opacity 1.5s ease-out;
+    background: rgba(255, 255, 255, 0.75);
+    padding: 10px 18px;
+    border-radius: 20px;
+    backdrop-filter: blur(6px);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+    z-index: 10;
 }
 
 #restart {
@@ -41,88 +79,55 @@ body {
     position: absolute;
     border-radius: 50%;
     color: white;
-    background-color: red;
+    background-color: #e53935;
     border: none;
     font-weight: 700;
     font-size: 1.2em;
-    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
     display: none;
     cursor: pointer;
+    box-shadow: 0 6px 20px rgba(229, 57, 53, 0.4);
+    transition: transform 0.2s, background-color 0.2s;
+    z-index: 20;
+}
+
+#restart:hover {
+    transform: scale(1.05);
+    background-color: #d32f2f;
+}
+
+#restart:active {
+    transform: scale(0.95);
 }
 
 #perfect {
     position: absolute;
+    top: 25%;
+    font-weight: 800;
+    font-size: 1.1em;
+    letter-spacing: 1px;
+    color: #e53935;
     opacity: 0;
-    transition: opacity 2s;
+    transition: opacity 0.5s ease;
+    pointer-events: none;
+    background: rgba(255, 255, 255, 0.85);
+    padding: 6px 16px;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    z-index: 10;
 }
 
-#youtube,
-#youtube-card {
-    display: none;
-}
-
-@media (min-height: 425px) {
-
-    /** Youtube logo by https://codepen.io/alvaromontoro */
-    #youtube {
-        z-index: 2;
-        display: block;
-        width: 100px;
-        height: 70px;
-        position: absolute;
-        bottom: 20px;
-        left: 20px;
-        background: red;
-        border-radius: 50% / 11%;
-        transform: scale(0.8);
-        transition: transform 0.5s;
-    }
-
-    #youtube:hover,
-    #youtube:focus {
-        transform: scale(0.9);
-    }
-
-    #youtube::before {
-        content: "";
-        display: block;
-        position: absolute;
-        top: 7.5%;
-        left: -6%;
-        width: 112%;
-        height: 85%;
-        background: red;
-        border-radius: 9% / 50%;
-    }
-
-    #youtube::after {
-        content: "";
-        display: block;
-        position: absolute;
-        top: 20px;
-        left: 40px;
-        width: 45px;
-        height: 30px;
-        border: 15px solid transparent;
-        box-sizing: border-box;
-        border-left: 30px solid white;
-    }
-
-    #youtube span {
-        font-size: 0;
-        position: absolute;
-        width: 0;
-        height: 0;
-        overflow: hidden;
-    }
-
-    #youtube:hover+#youtube-card {
-        display: block;
-        position: absolute;
-        bottom: 12px;
-        left: 10px;
-        padding: 25px 25px 25px 130px;
-        width: 300px;
-        background-color: white;
-    }
+#game-brand {
+    position: absolute;
+    bottom: 22px;
+    left: 28px;
+    font-size: 0.8em;
+    font-weight: 800;
+    letter-spacing: 2px;
+    color: #4a5c2b;
+    background: rgba(255, 255, 255, 0.6);
+    padding: 6px 14px;
+    border-radius: 14px;
+    backdrop-filter: blur(4px);
+    pointer-events: none;
+    z-index: 10;
 }
