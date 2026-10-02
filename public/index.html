@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Stick Hero - by Sunil</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🕹️</text></svg>">
+</head>
+<body>
+    <div class="container">
+        <!-- Top HUD -->
+        <div class="top-hud">
+            <div class="hud-left">
+                <div id="high-score-box">BEST <span id="high-score">0</span></div>
+                <div id="cherry-box">🍒 <span id="cherry-count">0</span></div>
+            </div>
+            <div class="hud-center">
+                <div id="score">0</div>
+            </div>
+            <div class="hud-right">
+                <button id="sound-btn" title="Toggle Sound" aria-label="Toggle Sound">🔊</button>
+                <button id="shop-btn" title="Skin Shop" aria-label="Open Skin Shop">SHOP</button>
+            </div>
+        </div>
+
+        <canvas id="game"></canvas>
+
+        <!-- Dynamic Game Hints & Banners -->
+        <div id="introduction">
+            Hold mouse, spacebar, or screen to stretch.<br>
+            <span class="sub-hint">Tap while walking to flip for 🍒!</span>
+        </div>
+        <div id="perfect">PERFECT! +2</div>
+
+        <!-- Game Over Modal -->
+        <div id="game-over-modal" class="modal-overlay">
+            <div class="modal-card">
+                <h2 class="game-over-title">GAME OVER</h2>
+                <div class="score-card">
+                    <div class="score-row">
+                        <span>SCORE</span>
+                        <span id="final-score" class="score-val">0</span>
+                    </div>
+                    <div class="score-row">
+                        <span>BEST</span>
+                        <span id="final-best" class="score-val gold">0</span>
+                    </div>
+                    <div class="score-row">
+                        <span>CHERRIES</span>
+                        <span id="final-cherries" class="score-val cherry">🍒 0</span>
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button id="restart" class="primary-btn">PLAY AGAIN</button>
+                    <button id="modal-shop-btn" class="secondary-btn">SKIN SHOP</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Skin Shop Modal -->
+        <div id="shop-modal" class="modal-overlay">
+            <div class="shop-card">
+                <div class="shop-header">
+                    <div class="shop-title">CHARACTER & STICK SHOP</div>
+                    <div class="shop-cherries">🍒 <span id="shop-cherry-count">0</span></div>
+                    <button id="close-shop-btn" class="close-btn" aria-label="Close Shop">&times;</button>
+                </div>
+
+                <div class="shop-tabs">
+                    <button id="tab-heroes" class="tab-btn active">HEROES</button>
+                    <button id="tab-sticks" class="tab-btn">STICKS</button>
+                </div>
+
+                <div id="shop-items-container" class="shop-items-grid">
+                    <!-- Dynamic items rendered by JavaScript -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Custom In-Game Brand Badge -->
+        <div id="game-brand">STICK HERO &bull; SUNIL</div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
