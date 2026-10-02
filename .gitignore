@@ -1,0 +1,4 @@
+node_modules/
+.playwright-mcp/
+.DS_Store
+Thumbs.db

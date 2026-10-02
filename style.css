@@ -1,0 +1,171 @@
+html,
+body {
+    height: 100%;
+    margin: 0;
+    overflow: hidden;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: manipulation;
+}
+
+body {
+    font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+    cursor: pointer;
+    background-color: #FEF1E1;
+}
+
+.container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    width: 100%;
+    position: relative;
+}
+
+#score {
+    position: absolute;
+    top: 30px;
+    right: 30px;
+    font-size: 2.4em;
+    font-weight: 900;
+    color: #222;
+    z-index: 10;
+    text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.8);
+}
+
+#introduction {
+    width: 220px;
+    position: absolute;
+    top: 15%;
+    font-weight: 600;
+    font-size: 0.9em;
+    text-align: center;
+    color: #333;
+    pointer-events: none;
+    transition: opacity 1.5s ease-out;
+    background: rgba(255, 255, 255, 0.7);
+    padding: 10px 14px;
+    border-radius: 20px;
+    backdrop-filter: blur(4px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+#restart {
+    width: 120px;
+    height: 120px;
+    position: absolute;
+    border-radius: 50%;
+    color: white;
+    background-color: #e53935;
+    border: none;
+    font-weight: 700;
+    font-size: 1.2em;
+    display: none;
+    cursor: pointer;
+    box-shadow: 0 6px 20px rgba(229, 57, 53, 0.4);
+    transition: transform 0.2s, background-color 0.2s;
+    z-index: 20;
+}
+
+#restart:hover {
+    transform: scale(1.05);
+    background-color: #d32f2f;
+}
+
+#restart:active {
+    transform: scale(0.95);
+}
+
+#perfect {
+    position: absolute;
+    top: 25%;
+    font-weight: 800;
+    font-size: 1.1em;
+    letter-spacing: 1px;
+    color: #e53935;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+    pointer-events: none;
+    background: rgba(255, 255, 255, 0.85);
+    padding: 6px 16px;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+#youtube,
+#youtube-card {
+    display: none;
+}
+
+@media (min-height: 425px) {
+    /** Youtube badge button **/
+    #youtube {
+        z-index: 20;
+        display: block;
+        width: 70px;
+        height: 50px;
+        position: absolute;
+        bottom: 20px;
+        left: 20px;
+        background: #ff0000;
+        border-radius: 50% / 14%;
+        transform: scale(0.8);
+        transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+    }
+
+    #youtube:hover,
+    #youtube:focus {
+        transform: scale(0.92);
+    }
+
+    #youtube::before {
+        content: "";
+        display: block;
+        position: absolute;
+        top: 7.5%;
+        left: -6%;
+        width: 112%;
+        height: 85%;
+        background: #ff0000;
+        border-radius: 10% / 50%;
+    }
+
+    #youtube::after {
+        content: "";
+        display: block;
+        position: absolute;
+        top: 15px;
+        left: 28px;
+        width: 25px;
+        height: 20px;
+        border: 10px solid transparent;
+        box-sizing: border-box;
+        border-left: 18px solid white;
+    }
+
+    #youtube span {
+        font-size: 0;
+        position: absolute;
+        width: 0;
+        height: 0;
+        overflow: hidden;
+    }
+
+    #youtube:hover + #youtube-card {
+        display: block;
+        position: absolute;
+        bottom: 18px;
+        left: 14px;
+        padding: 16px 20px 16px 95px;
+        width: 260px;
+        background-color: white;
+        border-radius: 12px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+        font-size: 0.85em;
+        line-height: 1.4;
+        color: #333;
+        z-index: 15;
+    }
+}

@@ -1,0 +1,19 @@
+{
+  "name": "stick-hero-game",
+  "version": "1.0.0",
+  "description": "Stick Hero - Classic Stick Man bridge building arcade game built with HTML5 Canvas and Vanilla JavaScript.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "keywords": [
+    "stick-hero",
+    "stickman",
+    "html5-canvas",
+    "canvas-game",
+    "javascript-game",
+    "arcade-game"
+  ],
+  "author": "Sunil",
+  "license": "MIT"
+}
