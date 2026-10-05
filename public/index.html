@@ -2,86 +2,256 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Stick Hero - by Sunil</title>
-    <link rel="stylesheet" href="style.css">
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🕹️</text></svg>">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#1d1b2b">
+    <meta name="description" content="Stick Hero - grow a bridge, cross the gap, grab cherries. A small arcade game by Sunil, built with plain HTML5 Canvas.">
+    <title>Stick Hero</title>
+    <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+    <link rel="preload" href="assets/fonts/LilitaOne-Latin.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="assets/fonts/Nunito-Latin-Variable.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-    <div class="container">
-        <!-- Top HUD -->
-        <div class="top-hud">
-            <div class="hud-left">
-                <div id="high-score-box">BEST <span id="high-score">0</span></div>
-                <div id="cherry-box">🍒 <span id="cherry-count">0</span></div>
+
+<!-- Icon sprite: every glyph in the UI is drawn here, no emoji -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+    <defs>
+        <symbol id="i-cherry" viewBox="0 0 24 24">
+            <path d="M8 14C9 9 11 5.5 13 3.4M16.4 15.5c.4-4-.4-8.4-3.4-12.1" fill="none" stroke="#3f8f4f" stroke-width="1.8" stroke-linecap="round"/>
+            <path d="M13 3.4c2.2-1.5 4.8-1.2 6.4.6-2.4 1.5-4.8 1.3-6.4-.6z" fill="#58b368" stroke="#1d1b2b" stroke-width="1"/>
+            <circle cx="7.6" cy="16.4" r="4.6" fill="#e4472f" stroke="#1d1b2b" stroke-width="1.4"/>
+            <circle cx="16.4" cy="17.2" r="4.2" fill="#c9341f" stroke="#1d1b2b" stroke-width="1.4"/>
+            <circle cx="6" cy="14.8" r="1.1" fill="#fff" opacity=".8"/>
+            <circle cx="15" cy="15.6" r="1" fill="#fff" opacity=".75"/>
+        </symbol>
+        <symbol id="i-crown" viewBox="0 0 24 24">
+            <path d="M3 8l4.5 4L12 5l4.5 7L21 8l-1.8 10H4.8L3 8z" fill="#f4b73a" stroke="#1d1b2b" stroke-width="1.6" stroke-linejoin="round"/>
+            <rect x="5" y="19.2" width="14" height="2.2" rx="1" fill="#1d1b2b"/>
+        </symbol>
+        <symbol id="i-sound-on" viewBox="0 0 24 24">
+            <path d="M4 9.5h3.6L13 5v14l-5.4-4.5H4z" fill="currentColor"/>
+            <path d="M16 8.6a4.8 4.8 0 010 6.8M18.6 6a8.4 8.4 0 010 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </symbol>
+        <symbol id="i-sound-off" viewBox="0 0 24 24">
+            <path d="M4 9.5h3.6L13 5v14l-5.4-4.5H4z" fill="currentColor"/>
+            <path d="M16.5 9.5l5 5m0-5l-5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </symbol>
+        <symbol id="i-pause" viewBox="0 0 24 24">
+            <rect x="6" y="5" width="4.4" height="14" rx="1.4" fill="currentColor"/>
+            <rect x="13.6" y="5" width="4.4" height="14" rx="1.4" fill="currentColor"/>
+        </symbol>
+        <symbol id="i-play" viewBox="0 0 24 24">
+            <path d="M7 4.6v14.8c0 .8.9 1.3 1.6.8l11-7.4c.6-.4.6-1.2 0-1.6l-11-7.4C7.9 3.3 7 3.8 7 4.6z" fill="currentColor"/>
+        </symbol>
+        <symbol id="i-armory" viewBox="0 0 24 24">
+            <path d="M12 2.6l8 3v6.2c0 4.6-3.2 8.4-8 9.6-4.8-1.2-8-5-8-9.6V5.6l8-3z" fill="currentColor"/>
+            <path d="M12 7v9M8.4 10.4h7.2" stroke="#f6ecd6" stroke-width="2" stroke-linecap="round" fill="none"/>
+        </symbol>
+        <symbol id="i-close" viewBox="0 0 24 24">
+            <path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+        </symbol>
+        <symbol id="i-lock" viewBox="0 0 24 24">
+            <rect x="5" y="10.6" width="14" height="10" rx="2.4" fill="currentColor"/>
+            <path d="M8 10.6V8a4 4 0 018 0v2.6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>
+        </symbol>
+        <symbol id="i-check" viewBox="0 0 24 24">
+            <path d="M5 12.8l4.6 4.4L19 7" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
+        </symbol>
+        <symbol id="i-gift" viewBox="0 0 24 24">
+            <rect x="3.5" y="10" width="17" height="10.5" rx="2" fill="currentColor"/>
+            <rect x="2.5" y="7" width="19" height="4" rx="1.6" fill="currentColor"/>
+            <path d="M12 7v13.5" stroke="#f6ecd6" stroke-width="2.2"/>
+            <path d="M12 7C9 7 7.2 6 7.2 4.6a1.8 1.8 0 012.4-1.6c1.2.6 2.4 2.4 2.4 4zm0 0c3 0 4.8-1 4.8-2.4a1.8 1.8 0 00-2.4-1.6c-1.2.6-2.4 2.4-2.4 4z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+        </symbol>
+        <symbol id="i-restart" viewBox="0 0 24 24">
+            <path d="M19 12a7 7 0 11-2.2-5.1" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+            <path d="M19.6 3.6v5.2h-5.2" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+        </symbol>
+        <symbol id="i-home" viewBox="0 0 24 24">
+            <path d="M3.6 11.2L12 4l8.4 7.2" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M6 10v9.4h4.2v-5h3.6v5H18V10" fill="currentColor"/>
+        </symbol>
+        <symbol id="i-trophy" viewBox="0 0 24 24">
+            <path d="M7 4h10v5a5 5 0 01-10 0V4z" fill="currentColor"/>
+            <path d="M7 6H4v1.5A3.5 3.5 0 007.6 11M17 6h3v1.5A3.5 3.5 0 0116.4 11" fill="none" stroke="currentColor" stroke-width="2"/>
+            <rect x="10.6" y="13.5" width="2.8" height="4" fill="currentColor"/>
+            <rect x="7.5" y="17.5" width="9" height="2.6" rx="1" fill="currentColor"/>
+        </symbol>
+        <!-- how-to-play pictograms -->
+        <symbol id="i-hand-hold" viewBox="0 0 40 40">
+            <rect x="17" y="3" width="6" height="22" rx="3" fill="#1d1b2b"/>
+            <path d="M20 0l-4.5 5h9z" fill="#e4472f"/>
+            <rect x="6" y="28" width="12" height="10" fill="#1d1b2b"/>
+        </symbol>
+        <symbol id="i-hand-release" viewBox="0 0 40 40">
+            <rect x="6" y="28" width="12" height="10" fill="#1d1b2b"/>
+            <rect x="26" y="28" width="10" height="10" fill="#1d1b2b"/>
+            <rect x="16" y="26" width="16" height="5" rx="2.5" fill="#1d1b2b"/>
+            <path d="M12 25c2-12 12-17 20-15" fill="none" stroke="#e4472f" stroke-width="2.6" stroke-linecap="round" stroke-dasharray="1 5"/>
+        </symbol>
+        <symbol id="i-flip" viewBox="0 0 40 40">
+            <rect x="3" y="14" width="34" height="5" rx="2.5" fill="#1d1b2b"/>
+            <circle cx="14" cy="28" r="4" fill="#e4472f" stroke="#1d1b2b" stroke-width="1.6"/>
+            <circle cx="24" cy="29" r="3.6" fill="#c9341f" stroke="#1d1b2b" stroke-width="1.6"/>
+            <path d="M14 8c3-4 9-4 12 0m0 0l-.5-4m.5 4l-4 .8" fill="none" stroke="#1d1b2b" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+        </symbol>
+    </defs>
+</svg>
+
+<div id="app" class="app">
+    <canvas id="stage" aria-label="Stick Hero game board"></canvas>
+
+    <!-- Heads-up display -->
+    <header id="hud" class="hud" hidden>
+        <div class="hud-group">
+            <div class="chip" title="Best score">
+                <svg class="ico" aria-hidden="true"><use href="#i-crown"/></svg>
+                <span class="chip-label">Best</span>
+                <b id="hud-best">0</b>
             </div>
-            <div class="hud-center">
-                <div id="score">0</div>
-            </div>
-            <div class="hud-right">
-                <button id="sound-btn" title="Toggle Sound" aria-label="Toggle Sound">🔊</button>
-                <button id="shop-btn" title="Skin Shop" aria-label="Open Skin Shop">SHOP</button>
+            <div class="chip" title="Cherries banked">
+                <svg class="ico" aria-hidden="true"><use href="#i-cherry"/></svg>
+                <b id="hud-cherries">0</b>
             </div>
         </div>
 
-        <canvas id="game"></canvas>
-
-        <!-- Dynamic Game Hints & Banners -->
-        <div id="introduction">
-            Hold mouse, spacebar, or screen to stretch.<br>
-            <span class="sub-hint">Tap while walking to flip for 🍒!</span>
+        <div class="score-wrap">
+            <div id="hud-score" class="score">0</div>
+            <div id="hud-combo" class="combo-tag" hidden>COMBO x2</div>
         </div>
-        <div id="perfect">PERFECT! +2</div>
 
-        <!-- Game Over Modal -->
-        <div id="game-over-modal" class="modal-overlay">
-            <div class="modal-card">
-                <h2 class="game-over-title">GAME OVER</h2>
-                <div class="score-card">
-                    <div class="score-row">
-                        <span>SCORE</span>
-                        <span id="final-score" class="score-val">0</span>
+        <div class="hud-group hud-group-right">
+            <button id="btn-pause" class="icon-btn" type="button" aria-label="Pause (P)" title="Pause (P)">
+                <svg class="ico" aria-hidden="true"><use href="#i-pause"/></svg>
+            </button>
+            <button id="btn-sound" class="icon-btn" type="button" aria-label="Toggle sound (M)" title="Sound (M)">
+                <svg class="ico" aria-hidden="true"><use id="sound-use" href="#i-sound-on"/></svg>
+            </button>
+            <button id="btn-armory" class="icon-btn icon-btn-label" type="button" aria-label="Open armory (A)" title="Armory (A)">
+                <svg class="ico" aria-hidden="true"><use href="#i-armory"/></svg>
+                <span>Armory</span>
+            </button>
+        </div>
+    </header>
+
+    <div id="hint" class="hint" hidden></div>
+    <div id="callout" class="callout" role="status" aria-live="polite"></div>
+
+    <!-- Title -->
+    <section id="screen-title" class="screen screen-title" aria-labelledby="title-h">
+        <div class="title-stack">
+            <p class="eyebrow">A small arcade game by Sunil</p>
+            <h1 id="title-h" class="logo"><span>Stick</span><span class="logo-b">Hero</span></h1>
+            <canvas id="title-hero" class="title-hero" aria-hidden="true"></canvas>
+            <p class="tagline">Grow the bridge. Cross the gap. Don't blink.</p>
+
+            <div class="title-actions">
+                <button id="btn-play" class="btn btn-primary btn-xl" type="button">
+                    <svg class="ico" aria-hidden="true"><use href="#i-play"/></svg> Play
+                </button>
+                <button id="btn-title-armory" class="btn btn-paper" type="button">
+                    <svg class="ico" aria-hidden="true"><use href="#i-armory"/></svg> Armory
+                </button>
+            </div>
+
+            <ol class="steps" aria-label="How to play">
+                <li><svg class="step-ico" aria-hidden="true"><use href="#i-hand-hold"/></svg><span><b>Hold</b> to grow the stick</span></li>
+                <li><svg class="step-ico" aria-hidden="true"><use href="#i-hand-release"/></svg><span><b>Release</b> to drop it</span></li>
+                <li><svg class="step-ico" aria-hidden="true"><use href="#i-flip"/></svg><span><b>Tap</b> mid-walk to flip</span></li>
+            </ol>
+            <p id="title-stats" class="title-stats"></p>
+        </div>
+    </section>
+
+    <!-- Pause -->
+    <section id="screen-pause" class="screen screen-modal" role="dialog" aria-modal="true" aria-labelledby="pause-h" hidden>
+        <div class="panel panel-small">
+            <h2 id="pause-h" class="panel-title">Paused</h2>
+            <div class="stack">
+                <button id="btn-resume" class="btn btn-primary" type="button"><svg class="ico" aria-hidden="true"><use href="#i-play"/></svg> Resume</button>
+                <button id="btn-pause-restart" class="btn btn-paper" type="button"><svg class="ico" aria-hidden="true"><use href="#i-restart"/></svg> Restart run</button>
+                <button id="btn-pause-home" class="btn btn-paper" type="button"><svg class="ico" aria-hidden="true"><use href="#i-home"/></svg> Main menu</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Game over -->
+    <section id="screen-over" class="screen screen-modal" role="dialog" aria-modal="true" aria-labelledby="over-h" hidden>
+        <div class="panel panel-small">
+            <div id="over-badge" class="stamp" hidden>New best!</div>
+            <p class="panel-eyebrow">Run over</p>
+            <h2 id="over-h" class="panel-title">You fell</h2>
+            <p id="over-quip" class="panel-sub"></p>
+
+            <div class="over-score">
+                <span class="over-score-label">Score</span>
+                <span id="over-score" class="over-score-val">0</span>
+            </div>
+
+            <dl class="over-grid">
+                <div><dt>Best</dt><dd id="over-best">0</dd></div>
+                <div><dt>Cherries</dt><dd id="over-cherries">0</dd></div>
+                <div><dt>Perfects</dt><dd id="over-perfects">0</dd></div>
+                <div><dt>Top combo</dt><dd id="over-combo">0</dd></div>
+            </dl>
+
+            <ul id="over-feats" class="feat-toasts" hidden></ul>
+
+            <div class="stack">
+                <button id="btn-retry" class="btn btn-primary" type="button"><svg class="ico" aria-hidden="true"><use href="#i-restart"/></svg> Try again</button>
+                <div class="row">
+                    <button id="btn-over-armory" class="btn btn-paper" type="button"><svg class="ico" aria-hidden="true"><use href="#i-armory"/></svg> Armory</button>
+                    <button id="btn-over-home" class="btn btn-paper" type="button"><svg class="ico" aria-hidden="true"><use href="#i-home"/></svg> Menu</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Armory -->
+    <section id="screen-armory" class="screen screen-modal" role="dialog" aria-modal="true" aria-labelledby="armory-h" hidden>
+        <div class="panel panel-armory">
+            <header class="armory-head">
+                <div>
+                    <h2 id="armory-h" class="panel-title panel-title-left">Armory</h2>
+                    <p class="panel-sub panel-sub-left">Spend cherries on new looks.</p>
+                </div>
+                <div class="armory-tools">
+                    <div class="chip chip-light" title="Cherries banked">
+                        <svg class="ico" aria-hidden="true"><use href="#i-cherry"/></svg>
+                        <b id="armory-cherries">0</b>
                     </div>
-                    <div class="score-row">
-                        <span>BEST</span>
-                        <span id="final-best" class="score-val gold">0</span>
-                    </div>
-                    <div class="score-row">
-                        <span>CHERRIES</span>
-                        <span id="final-cherries" class="score-val cherry">🍒 0</span>
-                    </div>
+                    <button id="btn-daily" class="btn btn-gold btn-sm" type="button">
+                        <svg class="ico" aria-hidden="true"><use href="#i-gift"/></svg>
+                        <span id="daily-label">Daily gift</span>
+                    </button>
+                    <button id="btn-armory-close" class="icon-btn icon-btn-light" type="button" aria-label="Close armory">
+                        <svg class="ico" aria-hidden="true"><use href="#i-close"/></svg>
+                    </button>
                 </div>
-                <div class="modal-actions">
-                    <button id="restart" class="primary-btn">PLAY AGAIN</button>
-                    <button id="modal-shop-btn" class="secondary-btn">SKIN SHOP</button>
-                </div>
+            </header>
+
+            <div class="tabs" role="tablist" aria-label="Armory sections">
+                <button id="tab-heroes" class="tab is-active" role="tab" aria-selected="true" aria-controls="armory-body" data-tab="heroes" type="button">Heroes</button>
+                <button id="tab-sticks" class="tab" role="tab" aria-selected="false" aria-controls="armory-body" data-tab="sticks" tabindex="-1" type="button">Sticks</button>
+                <button id="tab-records" class="tab" role="tab" aria-selected="false" aria-controls="armory-body" data-tab="records" tabindex="-1" type="button">Records</button>
             </div>
+
+            <div id="armory-body" class="armory-body" role="tabpanel"></div>
         </div>
+    </section>
 
-        <!-- Skin Shop Modal -->
-        <div id="shop-modal" class="modal-overlay">
-            <div class="shop-card">
-                <div class="shop-header">
-                    <div class="shop-title">CHARACTER & STICK SHOP</div>
-                    <div class="shop-cherries">🍒 <span id="shop-cherry-count">0</span></div>
-                    <button id="close-shop-btn" class="close-btn" aria-label="Close Shop">&times;</button>
-                </div>
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+</div>
 
-                <div class="shop-tabs">
-                    <button id="tab-heroes" class="tab-btn active">HEROES</button>
-                    <button id="tab-sticks" class="tab-btn">STICKS</button>
-                </div>
+<noscript><p style="padding:2rem;font-family:sans-serif">Stick Hero needs JavaScript enabled.</p></noscript>
 
-                <div id="shop-items-container" class="shop-items-grid">
-                    <!-- Dynamic items rendered by JavaScript -->
-                </div>
-            </div>
-        </div>
-
-        <!-- Custom In-Game Brand Badge -->
-        <div id="game-brand">STICK HERO &bull; SUNIL</div>
-    </div>
-
-    <script src="script.js"></script>
+<script src="js/storage.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/catalog.js"></script>
+<script src="js/game.js"></script>
+<script src="js/draw.js"></script>
+<script src="js/renderer.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/main.js"></script>
 </body>
 </html>

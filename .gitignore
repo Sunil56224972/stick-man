@@ -2,3 +2,5 @@ node_modules/
 .playwright-mcp/
 .DS_Store
 Thumbs.db
+docs/old-shots/
+*.log

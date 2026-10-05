@@ -1,10 +1,12 @@
 {
   "name": "stick-hero",
-  "version": "1.0.0",
-  "description": "Stick Hero - Classic Stick Man bridge building arcade game built with HTML5 Canvas and Vanilla JavaScript by Sunil.",
+  "version": "2.0.0",
+  "description": "Stick Hero - a hand-drawn arcade bridge game built with plain HTML5 Canvas. No frameworks, no build step.",
+  "private": true,
   "scripts": {
-    "build": "node -e \"const fs=require('fs'); ['public','dist'].forEach(dir=>{fs.mkdirSync(dir,{recursive:true}); ['index.html','style.css','script.js'].forEach(f=>fs.copyFileSync(f,dir+'/'+f));}); console.log('Build complete');\"",
-    "start": "node server.js"
+    "start": "node server.js",
+    "test": "node tests/run.js",
+    "test:e2e": "node tests/e2e.js"
   },
   "repository": {
     "type": "git",

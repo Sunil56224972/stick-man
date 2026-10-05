@@ -1,192 +1,99 @@
-# Stick Hero (Stick Man)
+# Stick Hero
 
-A feature-packed, physics-based stick bridge arcade game built with HTML5 Canvas and Vanilla JavaScript.
+A hand-drawn arcade bridge game. Hold to grow a stick, release to drop it, and walk across. Miss the gap and you fall. Built with plain HTML5 Canvas and vanilla JavaScript: no frameworks, no bundler, no build step.
 
-[Screenshots](#screenshots--gameplay) • [Features](#features) • [How to Play](#how-to-play) • [Skin Shop](#skin-shop) • [Quick Start](#quick-start) • [Architecture](#architecture)
-
----
-
-## Screenshots & Gameplay
-
-<div align="center">
-
-### 1. Waiting at the Edge
-*Hold down the mouse, spacebar, or tap on screen to stretch out the stick.*
-
-![Game Starting Screen](screenshots/gameplay.png)
-
----
-
-### 2. Precision Stretching
-*Gauge the distance to the next pillar. If the stick is too short or too long, the hero falls.*
-
-![Stick Stretching](screenshots/stretching.png)
-
----
-
-### 3. Crossing the Bridge & Cherry Collection
-*Landing directly on the red center marker awards combo points. Tap while crossing to hang upside down and snatch cherries!*
-
-![Hero Crossing Platform](screenshots/walking.png)
-
----
-
-### 4. Character & Stick Skin Shop
-*Spend your hard-earned cherries to unlock custom ninja costumes and special stick weapons.*
-
-![Skin Shop](screenshots/shop.png)
-
----
-
-### 5. Game Over & Instant Restart
-*View your score breakdown and cherries collected, with instant restart or shop access.*
-
-![Game Over Screen](screenshots/gameover.png)
-
-</div>
-
----
+![Title screen](docs/screenshots/title.png)
 
 ## Features
 
-- **Upside-Down Cherry Mechanic**: Cherries randomly spawn hanging underneath bridges. Tap or click while walking to flip upside down and collect them, but flip back upright before you crash into the next pillar!
-- **Web Audio Synthesizer**: Zero-dependency 8-bit sound effects synthesized on the fly via the HTML5 `AudioContext` (stretch pitch-ramp, plank drop, footsteps, flip whoosh, cherry ding, combo chimes, and fall slides), with a persistent mute button.
-- **Character & Stick Skin Shop**:
-  - **Hero Outfits**: Classic Ninja, Neon Assassin, Golden Master, and Crimson Ghost.
-  - **Stick Styles**: Classic Timber, Bamboo Staff, Cyan Lightsaber, and Rainbow Prism.
-  - All unlocks and active equipment persist in browser `localStorage`.
-- **Dynamic Day / Sunset / Night Theme Engine**:
-  - **Day (Score 0-9)**: Gentle sunny pastel gradient with green hills and floating drift particles.
-  - **Sunset (Score 10-19)**: Rich orange-amber twilight with a radiant sun and dusk hills.
-  - **Midnight (Score 20+)**: Deep starry space with a glowing crescent moon and twinkling stars.
-- **Combo Streak & Particle Explosions**:
-  - Landing dead-center on the red target grants consecutive multipliers (`PERFECT +2`, `COMBO x2 +4`, `COMBO x3 +6`...).
-  - Confetti bursts, sparkle effects, and floating floating point indicators on canvas.
-- **Full Cross-Platform & Touch Support**:
-  - Play on desktop (mouse & Spacebar) or mobile/tablet (touch & hold).
-  - Responsive canvas scaling adapting seamlessly to any screen size.
-- **High Score & Cherries Persistence**: Automatically tracks your best score and cherry balance in `localStorage`.
-- **Zero Build Tools or Heavy Dependencies**: Runs directly in any browser out of the box.
+- Hold-and-release bridge mechanic with a difficulty curve that tightens gaps and narrows pillars as your score climbs.
+- Mid-walk gravity flip: tap while crossing a gap to hang under the stick and grab cherries.
+- Perfect drops on the red target pillar marker, with a combo multiplier.
+- Armory with 6 heroes and 6 stick styles, each with a rarity tier, all drawn in code (no image assets).
+- 10 feats that pay out cherries, a Records tab with lifetime stats, and a daily gift with a streak bonus.
+- Day, dusk and night sky that blends as you progress, with parallax hills and pines.
+- Synthesised sound effects through the Web Audio API, with a mute toggle.
+- Works with mouse, touch and keyboard. Layout adapts to phones and short landscape windows.
+- Versioned save in `localStorage`, with migration from the previous release's keys.
 
----
+## Screenshots
 
-## How to Play
+| Growing a bridge | Gravity flip | Perfect drop |
+| --- | --- | --- |
+| ![Stretching](docs/screenshots/stretching.png) | ![Flip](docs/screenshots/flip.png) | ![Perfect](docs/screenshots/perfect.png) |
 
-| Control | Action |
-| :--- | :--- |
-| **Mouse Left-Click / Touch / Spacebar (Hold)** | Grow stick upwards |
-| **Mouse Left-Click / Touch / Spacebar (Release)** | Drop stick onto next platform |
-| **Click / Tap / Spacebar (While Walking)** | **Flip upside down** to grab cherries (tap again to flip upright) |
-| **Speaker Button (🔊 / 🔇)** | Toggle audio sound effects |
-| **SHOP Button** | Open character & stick customization store |
-| **Restart Button / Spacebar** | Restart game after falling |
+| Armory: heroes | Armory: sticks | Records and feats |
+| --- | --- | --- |
+| ![Heroes](docs/screenshots/armory-heroes.png) | ![Sticks](docs/screenshots/armory-sticks.png) | ![Records](docs/screenshots/armory-records.png) |
 
-### Pro Tips
-1. **Cherries Risk vs Reward**: Hanging upside down is the only way to collect cherries, but if you don't flip upright before the next platform edge, you will collide with the pillar!
-2. **Aim for the Red Target**: Hitting consecutive red markers chains combos for massive score multipliers.
-3. **Patience & Rhythm**: Sticks stretch at a consistent rate of 1 pixel every 4 milliseconds.
+| Pause | Game over | Mobile |
+| --- | --- | --- |
+| ![Pause](docs/screenshots/pause.png) | ![Game over](docs/screenshots/gameover.png) | ![Mobile](docs/screenshots/mobile-play.png) |
 
----
+## Controls
 
-## Skin Shop
+| Action | Mouse / touch | Keyboard |
+| --- | --- | --- |
+| Grow the stick | Press and hold | Hold `Space` or `Enter` |
+| Drop the stick | Release | Release `Space` or `Enter` |
+| Flip while crossing | Click or tap | `Space` or `Enter` |
+| Pause / resume | Pause button | `P` or `Esc` |
+| Mute / unmute | Speaker button | `M` |
+| Open the armory | Armory button | `A` |
 
-Collect cherries while playing to unlock skins:
+## Rules
 
-### Heroes
-- **Classic Ninja** (Unlocked by default)
-- **Neon Assassin** (10 Cherries)
-- **Golden Master** (25 Cherries)
-- **Crimson Ghost** (50 Cherries)
+- A landing scores 1 point. A perfect drop (stick tip on the red marker) scores `combo x 2`, and the combo grows with each consecutive perfect.
+- Flipping is only allowed while you are over a gap. Arriving at a pillar upside down crashes into it.
+- Cherries hang beneath wide gaps (80 px or more). You can only collect them while flipped.
+- The sky changes at scores 10 (dusk) and 20 (night).
+- The daily gift pays 10 cherries plus 2 per streak day, capped at 22.
 
-### Sticks
-- **Classic Timber** (Unlocked by default)
-- **Bamboo Staff** (10 Cherries)
-- **Cyan Lightsaber** (25 Cherries)
-- **Rainbow Prism** (50 Cherries)
+## Run locally
 
----
-
-## Quick Start
-
-### Run in Browser
-Clone the repository and open `index.html` in any browser:
-
-```bash
-git clone https://github.com/Sunil56224972/stick-man.git
-cd stick-man
-```
-
-Double click `index.html` to play immediately!
-
-### Local Development Server
-Or start the included lightweight server:
+Requires Node.js 18 or newer. There are no dependencies to install.
 
 ```bash
 npm start
 ```
 
-Then visit `http://localhost:8089`.
+Then open <http://localhost:8089>. The server only serves the `public/` folder and rejects path traversal. Any static host works too, since the game is just files.
 
----
+## Tests
 
-## Project Structure
+```bash
+npm test          # 33 unit tests for the game simulation, storage and catalog
+npm run test:e2e  # 57 browser checks (needs the server running and Playwright)
+```
+
+The end-to-end suite drives the real UI: starting a run, holding and releasing, flips, cherries, pause, game over, persistence, reset and a phone-sized viewport. It also fails on any console error. It reads Playwright from `PLAYWRIGHT_PATH` if set, and regenerates the images in `docs/screenshots/`.
+
+## Project structure
 
 ```text
-stick-man/
-├── index.html        # Main HTML5 game entry point with HUD and Modals
-├── style.css         # UI stylesheet, glassmorphism HUD, shop grid, responsive layout
-├── script.js         # Canvas engine, Web Audio synth, state machine, particle FX
-├── package.json      # Project metadata and start script
-├── server.js         # Zero-dependency local development server
-├── .gitignore        # Git ignore file
-├── screenshots/      # Gameplay screenshots
-│   ├── gameplay.png
-│   ├── stretching.png
-│   ├── walking.png
-│   ├── shop.png
-│   └── gameover.png
-└── README.md         # Comprehensive documentation
+public/
+  index.html        markup, SVG icon sprite, all screens
+  css/style.css     paper-cut UI theme
+  assets/           self-hosted fonts and favicon
+  js/
+    game.js         simulation: physics, rules, difficulty (no DOM, no canvas)
+    renderer.js     canvas scene: sky, parallax, pillars, particles, shake
+    draw.js         hero, stick and cherry drawing helpers
+    catalog.js      heroes, sticks, feats, rarity
+    storage.js      versioned save, migration, daily gift
+    audio.js        Web Audio sound synthesis
+    ui.js           HUD, armory, toasts, dialogs
+    main.js         input, game loop, wiring
+server.js           tiny static file server
+tests/              unit and end-to-end suites
 ```
 
----
+The simulation in `game.js` is pure logic that emits events (`perfect`, `flip`, `cherry`, `crash`, ...). `main.js` translates those into sound, UI updates and screen shake, and `renderer.js` only reads game state. That split is what lets the unit tests run in plain Node.
 
-## Architecture
+## Deploy
 
-The gameplay lifecycle is managed through a finite state loop:
-
-```mermaid
-stateDiagram-v2
-    [*] --> waiting
-    waiting --> stretching : hold (mouse / touch / space)
-    stretching --> turning : release
-    turning --> walking : Stick rotates 90 degrees
-    walking --> walking : click/tap to flip upside-down (collect 🍒)
-    walking --> transitioning : Stick lands on platform
-    walking --> falling : Stick misses platform OR upside-down crash
-    transitioning --> waiting : Camera smoothly scrolls to next pillar
-    falling --> [*] : Game Over modal appears
-```
-
----
-
-## Contributing
-
-Contributions, bug reports, and suggestions are welcome. Feel free to open an issue or submit a pull request.
-
-1. Fork the repository
-2. Create a branch (`git checkout -b feature/improvement`)
-3. Commit your changes (`git commit -m 'Add improvement'`)
-4. Push to your branch (`git push origin feature/improvement`)
-5. Open a Pull Request
-
----
-
-## Author
-
-Developed and maintained by **[Sunil](https://github.com/Sunil56224972)**.
-
----
+The repo includes a `vercel.json` that publishes `public/` with clean URLs. On Vercel, import the repository and keep the defaults. GitHub Pages or Netlify work the same way by pointing them at `public/`.
 
 ## License
 
-This project is licensed under the MIT License.
+MIT, see [LICENSE](LICENSE). Made by [Sunil](https://github.com/Sunil56224972).
