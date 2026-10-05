@@ -92,7 +92,14 @@ function check(name, ok, extra) {
         // hold until the stick reaches len (poll the live length for accuracy)
         await page.mouse.move(640, 300);
         await page.mouse.down();
-        await page.waitForFunction((l) => SH.debug.game.currentStick().length >= l, len, { timeout: 8000, polling: 'raf' });
+        // release in the same frame the stick reaches len (a frame is ~4px, the perfect zone is 10px)
+        await page.waitForFunction((l) => {
+            const g = SH.debug.game;
+            if (g.currentStick().length < l) return false;
+            g.currentStick().length = l;
+            window.dispatchEvent(new PointerEvent('pointerup'));
+            return true;
+        }, len, { timeout: 8000, polling: 'raf' });
         await page.mouse.up();
     }
 
@@ -104,13 +111,18 @@ function check(name, ok, extra) {
     const cherry = await dbg(() => SH.debug.game.cherries.find((c) => c.x > SH.debug.game.currentStick().x));
     check('a cherry hangs in the gap', !!cherry);
     await page.waitForFunction(() => SH.debug.game.heroX > SH.debug.game.currentStick().x + 15, null, { polling: 'raf' });
+    const bank0 = await dbg(() => SH.store.data.cherries);
     await page.mouse.click(640, 300); // flip
     check('click mid-walk flips the hero', await dbg(() => SH.debug.game.flipped));
-    const bank0 = await dbg(() => SH.store.data.cherries);
-    await page.waitForFunction(() => SH.debug.game.cherriesRun >= 1 || SH.debug.game.phase !== 'walking', null, { polling: 'raf', timeout: 5000 });
-    check('flying under a cherry collects it', (await dbg(() => SH.store.data.cherries)) === bank0 + 1);
+    // Freeze the simulation the moment the cherry is taken so the screenshot (slow) can't
+    // let the hero reach the wall, then flip back.
+    await page.waitForFunction(() => {
+        const g = SH.debug.game;
+        if (g.cherriesRun >= 1 && g.flipped) { g._upd = g.update; g.update = function () {}; return true; }
+        return g.phase !== 'walking';
+    }, null, { polling: 'raf', timeout: 5000 });
     await shot('flip');
-    await page.mouse.click(640, 300); // flip back
+    await dbg(() => { const g = SH.debug.game; if (g._upd) { g.update = g._upd; g._upd = null; } g.press(); g.release(); });    check('flying under a cherry collects it', (await dbg(() => SH.store.data.cherries)) === bank0 + 1);
     check('second click flips upright', (await dbg(() => SH.debug.game.flipped)) === false);
     await page.waitForFunction(() => SH.debug.game.phase === 'waiting', null, { timeout: 8000 });
     check('crossed safely and ready for next stick', true);

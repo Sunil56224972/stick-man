@@ -21,6 +21,7 @@
     var overAt = 0;            // when the game-over card appeared (input lock)
     var bestAtStart = store.data.best;
     var flipHintShown = false;
+    var prevScore = 0;        // to spot the dusk and night thresholds
 
     var COLORS_PERFECT = ['#e4472f', '#f4b73a', '#19d3e6', '#58b368', '#ffffff'];
     var COLORS_CHERRY = ['#e4472f', '#c9341f', '#ff8a70', '#58b368'];
@@ -39,10 +40,13 @@
                 ui.hint(null);
                 break;
             case 'stretch': sound.stretchTo(d.length); break;
-            case 'stretchEnd': sound.stretchStop(); break;
+            case 'stretchEnd':
+                sound.stretchStop();
+                if (d.length >= SH.Game.C.STICK_MIN) sound.swoosh(d.length);
+                break;
 
             case 'drop': {
-                sound.drop();
+                sound.drop(d.hit);
                 var s = game.currentStick();
                 renderer.dust(s.x + s.length, -2, 6);
                 renderer.shake(d.hit ? 2.5 : 1.5);
@@ -60,11 +64,15 @@
                 break;
             }
             case 'point':
+                sound.point();
                 ui.setCombo(0);
                 renderer.floatText('+1', d.x, -26, '#ffffff', 18);
                 break;
             case 'score': {
                 ui.setScore(d.score, true);
+                if (d.score >= 10 && prevScore < 10) sound.skyChange(1);
+                else if (d.score >= 20 && prevScore < 20) sound.skyChange(2);
+                prevScore = d.score;
                 if (d.score > store.data.best) {
                     store.data.best = d.score;
                     ui.setBest(d.score);
@@ -77,8 +85,9 @@
             }
 
             case 'step': sound.step(); break;
+            case 'flipDenied': sound.flipDenied(); break;
             case 'flip':
-                sound.flip();
+                sound.flip(d.upside);
                 store.data.stats.flips++;
                 break;
 
@@ -125,7 +134,7 @@
 
         mode = 'over';
         overAt = root.performance.now();
-        sound.gameOver();
+        if (newBest && run.score > 0) sound.newBest(); else sound.gameOver();
         ui.showOver({
             score: run.score, best: store.data.best, cherries: run.cherries,
             perfects: run.perfects, bestCombo: run.bestCombo, newBest: newBest && run.score > 0, feats: feats
@@ -147,6 +156,7 @@
         sound.unlock();
         holding = false;
         game.reset();
+        prevScore = 0;
         renderer.clearFx();
         bestAtStart = store.data.best;
         ui.hideAll();

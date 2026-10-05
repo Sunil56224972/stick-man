@@ -12,7 +12,7 @@ A hand-drawn arcade bridge game. Hold to grow a stick, release to drop it, and w
 - Armory with 6 heroes and 6 stick styles, each with a rarity tier, all drawn in code (no image assets).
 - 10 feats that pay out cherries, a Records tab with lifetime stats, and a daily gift with a streak bonus.
 - Day, dusk and night sky that blends as you progress, with parallax hills and pines.
-- Synthesised sound effects through the Web Audio API, with a mute toggle.
+- Fully synthesised soundtrack of effects, no audio files: a creaking bamboo stick that rises in pitch as it grows, wood-on-stone knocks, alternating footsteps, taiko impacts and koto-style plucks. Everything is tuned to one pentatonic scale, perfect combos climb it, and a temple bell marks dusk and night. Mute with the speaker button or `M`.
 - Works with mouse, touch and keyboard. Layout adapts to phones and short landscape windows.
 - Versioned save in `localStorage`, with migration from the previous release's keys.
 
