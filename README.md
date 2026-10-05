@@ -12,7 +12,7 @@ A hand-drawn arcade bridge game. Hold to grow a stick, release to drop it, and w
 - Armory with 6 heroes and 6 stick styles, each with a rarity tier, all drawn in code (no image assets).
 - 10 feats that pay out cherries, a Records tab with lifetime stats, and a daily gift with a streak bonus.
 - Day, dusk and night sky that blends as you progress, with parallax hills and pines.
-- Fully synthesised soundtrack of effects, no audio files: a creaking bamboo stick that rises in pitch as it grows, wood-on-stone knocks, alternating footsteps, taiko impacts and koto-style plucks. Everything is tuned to one pentatonic scale, perfect combos climb it, and a temple bell marks dusk and night. Mute with the speaker button or `M`.
+- Fully synthesised soundtrack of effects, no audio files: a creaking bamboo stick that rises in pitch as it grows, wood-on-stone knocks, soft sandal footsteps locked to the leg animation, taiko impacts and koto-style plucks. Everything is tuned to one pentatonic scale, perfect combos climb it, and a temple bell marks dusk and night. Mute with the speaker button or `M`.
 - Fully responsive: phones in portrait and landscape, tablets, laptops and ultrawide monitors. Safe-area insets keep the HUD clear of notches, cards scroll instead of clipping on short screens, and tap targets stay thumb-sized.
 - Works with mouse, touch and keyboard.
 - Versioned save in `localStorage`, with migration from the previous release's keys.
@@ -69,7 +69,7 @@ Then open <http://localhost:8089>. The server only serves the `public/` folder a
 ## Tests
 
 ```bash
-npm test          # 33 unit tests for the game simulation, storage and catalog
+npm test          # 38 unit tests for the game simulation, storage and catalog
 npm run test:e2e  # 57 browser checks (needs the server running and Playwright)
 npm run test:responsive  # 405 layout checks across 12 device sizes
 ```

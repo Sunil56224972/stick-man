@@ -397,7 +397,7 @@
             }
         }
 
-        if (game.phase === 'walking') phase = game.walkDist * 0.2;
+        if (game.phase === 'walking') phase = game.walkDist * Math.PI / SH.Game.C.STEP_DIST;
         if (game.phase === 'stretching') squash = 0.93;
         if (game.phase === 'falling') {
             y = game.heroY;

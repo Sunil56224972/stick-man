@@ -27,7 +27,8 @@
         CHERRY_REACH: 16,
         FALL_TIME: 750,       // ms spent falling before the run is over
         GRAVITY: 0.0016,
-        STEP_DIST: 30
+        STEP_DIST: 56,         // one footfall every 56 px (~4.6 a second); the leg animation is locked to this
+    STEP_PHASE: 28         // walkDist at which the first foot lands (mid-swing extreme)
     };
 
     function Game(opts) {
@@ -56,7 +57,7 @@
         this.heroVX = 0;
         this.flipped = false;
         this.walkDist = 0;
-        this.stepAcc = 0;
+        this.stepIdx = 0;
         this.fallTimer = 0;
         this.fallKind = null;  // 'miss' | 'pillar'
         this.target = null;    // platform the current stick landed on
@@ -236,17 +237,17 @@
             this.combo = 0;
         }
         this.phase = 'walking';
-        this.stepAcc = 0;
+        this.stepIdx = Math.floor((this.walkDist + C.STEP_PHASE) / C.STEP_DIST);
     };
 
     Game.prototype._walk = function (dt, stick) {
         var move = dt * C.WALK;
         this.heroX += move;
         this.walkDist += move;
-        this.stepAcc += move;
-        if (this.stepAcc >= C.STEP_DIST) {
-            this.stepAcc -= C.STEP_DIST;
-            if (!this.flipped) this.emit('step');
+        var idx = Math.floor((this.walkDist + C.STEP_PHASE) / C.STEP_DIST);
+        if (idx > this.stepIdx) {
+            this.stepIdx = idx;
+            if (!this.flipped) this.emit('step', { n: idx });
         }
 
         if (this.flipped) {

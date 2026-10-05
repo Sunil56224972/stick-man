@@ -84,7 +84,7 @@
                 break;
             }
 
-            case 'step': sound.step(); break;
+            case 'step': sound.step(d.n); break;
             case 'flipDenied': sound.flipDenied(); break;
             case 'flip':
                 sound.flip(d.upside);
@@ -101,6 +101,7 @@
             }
 
             case 'arrive':
+                sound.settle();
                 renderer.dust(game.heroX, -2, 4);
                 break;
 

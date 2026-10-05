@@ -62,6 +62,58 @@ function finishCrossing(g) { until(g, 'waiting'); }
 
 console.log('\nGame simulation');
 
+// --- footsteps -------------------------------------------------------------------
+
+// Walk a perfect bridge and record when (in ms of walking) each footstep fires.
+function recordSteps(len, flipAt) {
+    const times = [], dist = [];
+    const g = new SH.Game({ onEvent: (n) => { if (n === 'step') { times.push(g.time); dist.push(g.walkDist); } } });
+    g.rng = seeded(7);
+    g.press(); while (g.currentStick().length < len) g.update(8); g.release();
+    until(g, 'walking');
+    const t0 = g.time;
+    if (flipAt != null) { while (g.heroX < g.currentStick().x + flipAt) g.update(8); g.press(); }
+    while (g.phase === 'walking') g.update(8);
+    return { g, times: times.map((t) => t - t0), dist };
+}
+
+test('footsteps come at a natural walking cadence, not a rattle', () => {
+    const { times } = recordSteps(230);
+    assert.ok(times.length >= 3, 'expected several steps, got ' + times.length);
+    for (let i = 1; i < times.length; i++) {
+        const gap = times[i] - times[i - 1];
+        // 2.5 to 5 steps a second is a walk; faster sounds like a machine gun
+        assert.ok(gap >= 200 && gap <= 400, 'step gap ' + gap + 'ms is not a walking rhythm');
+    }
+});
+
+test('footsteps are evenly spaced', () => {
+    const { dist } = recordSteps(230);
+    for (let i = 1; i < dist.length; i++) {
+        assert.ok(Math.abs(dist[i] - dist[i - 1] - SH.Game.C.STEP_DIST) < 1.5, 'uneven stride');
+    }
+});
+
+test('no footsteps while hanging under the stick', () => {
+    const flippedRun = recordSteps(230, 20).times.length;
+    const normalRun = recordSteps(230).times.length;
+    assert.ok(flippedRun < normalRun, 'flipped hero should be silent underneath');
+});
+
+test('a short stick still gets its first step well after the stick lands', () => {
+    const { times } = recordSteps(60);
+    if (times.length) assert.ok(times[0] > 60, 'first footfall too soon: ' + times[0] + 'ms');
+});
+
+test('the legs hit their widest stride exactly when a footfall fires', () => {
+    // renderer: phase = walkDist * PI / STEP_DIST, swing = sin(phase); feet land at |sin| = 1
+    const C = SH.Game.C;
+    const { dist } = recordSteps(230);
+    dist.forEach((d) => {
+        const swing = Math.abs(Math.sin(d * Math.PI / C.STEP_DIST));
+        assert.ok(swing > 0.99, 'foot lands mid-swing (|sin| = ' + swing.toFixed(2) + ')');
+    });
+});
 test('starts waiting with 5 platforms and a zero-length stick', () => {
     const { g } = newGame();
     assert.strictEqual(g.phase, 'waiting');

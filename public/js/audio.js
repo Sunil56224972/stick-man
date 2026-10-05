@@ -30,6 +30,7 @@
         this.noise = null;
         this.creak = null;
         this.footLeft = true;
+        this.lastStep = -1;   // audio-clock time of the last footfall
     }
 
     Sound.prototype.unlock = function () {
@@ -256,14 +257,31 @@
         this._burst({ filter: 'bandpass', freq: 2600, q: 1.4, dur: 0.035, vol: 0.2 });
     };
 
-    // Footsteps alternate left and right, like soft sandals on timber.
+    // A footfall: soft sandal on stone. Three layers keep it round instead of clicky:
+    // a low heel thump, a muffled scuff of the sole, and a faint toe tap just after.
+    // Left and right feet differ slightly and every step is randomised a little,
+    // so a run of steps never sounds like a looped sample.
     Sound.prototype.step = function () {
+        if (!this._ok()) return;
+        var t = this.ctx.currentTime;
+        if (t - this.lastStep < 0.11) return;       // never stack steps into a buzz
+        this.lastStep = t;
         this.footLeft = !this.footLeft;
-        var f = this.footLeft ? 760 : 620;
-        this._burst({ filter: 'bandpass', freq: f, q: 1.1, dur: 0.06, vol: 0.32 });
-        this._tone({ type: 'sine', freq: this.footLeft ? 150 : 128, to: 80, dur: 0.07, vol: 0.14 });
+        var side = this.footLeft ? 1 : 0.93;
+        var v = 0.85 + Math.random() * 0.3;
+        var f = (0.95 + Math.random() * 0.1) * side;
+
+        this._tone({ type: 'sine', freq: 128 * f, to: 54, dur: 0.11, vol: 0.2 * v, attack: 0.006 });
+        this._burst({ filter: 'lowpass', freq: 1500 * f, to: 380, q: 0.6, dur: 0.075, vol: 0.12 * v, attack: 0.008 });
+        this._burst({ filter: 'bandpass', freq: 2300 * f, q: 0.9, dur: 0.03, vol: 0.035 * v, delay: 0.05, attack: 0.004 });
     };
 
+    // Arriving on the far pillar: both feet land, the weight settles.
+    Sound.prototype.settle = function () {
+        this._tone({ type: 'sine', freq: 105, to: 50, dur: 0.16, vol: 0.2, attack: 0.008, reverb: 0.15 });
+        this._burst({ filter: 'lowpass', freq: 1100, to: 300, dur: 0.12, vol: 0.1, attack: 0.01 });
+        this._burst({ filter: 'bandpass', freq: 1800, q: 0.7, dur: 0.07, vol: 0.04, delay: 0.07, attack: 0.01 });
+    };
     // --- scoring ------------------------------------------------------------------
 
     // A normal landing: one soft wood-bar note.
