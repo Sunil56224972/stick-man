@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="theme-color" content="#1d1b2b">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="format-detection" content="telephone=no">
     <meta name="description" content="Stick Hero - grow a bridge, cross the gap, grab cherries. A small arcade game by Sunil, built with plain HTML5 Canvas.">
     <title>Stick Hero</title>
     <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
@@ -177,8 +181,9 @@
 
     <!-- Game over -->
     <section id="screen-over" class="screen screen-modal" role="dialog" aria-modal="true" aria-labelledby="over-h" hidden>
-        <div class="panel panel-small">
+        <div class="panel panel-small panel-over">
             <div id="over-badge" class="stamp" hidden>New best!</div>
+            <div class="over-head">
             <p class="panel-eyebrow">Run over</p>
             <h2 id="over-h" class="panel-title">You fell</h2>
             <p id="over-quip" class="panel-sub"></p>
@@ -187,6 +192,9 @@
                 <span class="over-score-label">Score</span>
                 <span id="over-score" class="over-score-val">0</span>
             </div>
+            </div>
+
+            <div class="over-body">
 
             <dl class="over-grid">
                 <div><dt>Best</dt><dd id="over-best">0</dd></div>
@@ -203,6 +211,7 @@
                     <button id="btn-over-armory" class="btn btn-paper" type="button"><svg class="ico" aria-hidden="true"><use href="#i-armory"/></svg> Armory</button>
                     <button id="btn-over-home" class="btn btn-paper" type="button"><svg class="ico" aria-hidden="true"><use href="#i-home"/></svg> Menu</button>
                 </div>
+            </div>
             </div>
         </div>
     </section>

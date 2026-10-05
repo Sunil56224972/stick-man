@@ -13,7 +13,8 @@ A hand-drawn arcade bridge game. Hold to grow a stick, release to drop it, and w
 - 10 feats that pay out cherries, a Records tab with lifetime stats, and a daily gift with a streak bonus.
 - Day, dusk and night sky that blends as you progress, with parallax hills and pines.
 - Fully synthesised soundtrack of effects, no audio files: a creaking bamboo stick that rises in pitch as it grows, wood-on-stone knocks, alternating footsteps, taiko impacts and koto-style plucks. Everything is tuned to one pentatonic scale, perfect combos climb it, and a temple bell marks dusk and night. Mute with the speaker button or `M`.
-- Works with mouse, touch and keyboard. Layout adapts to phones and short landscape windows.
+- Fully responsive: phones in portrait and landscape, tablets, laptops and ultrawide monitors. Safe-area insets keep the HUD clear of notches, cards scroll instead of clipping on short screens, and tap targets stay thumb-sized.
+- Works with mouse, touch and keyboard.
 - Versioned save in `localStorage`, with migration from the previous release's keys.
 
 ## Screenshots
@@ -26,9 +27,15 @@ A hand-drawn arcade bridge game. Hold to grow a stick, release to drop it, and w
 | --- | --- | --- |
 | ![Heroes](docs/screenshots/armory-heroes.png) | ![Sticks](docs/screenshots/armory-sticks.png) | ![Records](docs/screenshots/armory-records.png) |
 
-| Pause | Game over | Mobile |
+| Pause | Game over | Phone |
 | --- | --- | --- |
-| ![Pause](docs/screenshots/pause.png) | ![Game over](docs/screenshots/gameover.png) | ![Mobile](docs/screenshots/mobile-play.png) |
+| ![Pause](docs/screenshots/pause.png) | ![Game over](docs/screenshots/gameover.png) | ![Phone](docs/screenshots/mobile-play.png) |
+
+### Responsive
+
+| Phone, landscape | Landscape game over | Landscape armory | Tablet |
+| --- | --- | --- | --- |
+| ![Landscape](docs/screenshots/landscape-play.png) | ![Landscape game over](docs/screenshots/landscape-gameover.png) | ![Landscape armory](docs/screenshots/landscape-armory.png) | ![Tablet](docs/screenshots/tablet-title.png) |
 
 ## Controls
 
@@ -64,9 +71,10 @@ Then open <http://localhost:8089>. The server only serves the `public/` folder a
 ```bash
 npm test          # 33 unit tests for the game simulation, storage and catalog
 npm run test:e2e  # 57 browser checks (needs the server running and Playwright)
+npm run test:responsive  # 405 layout checks across 12 device sizes
 ```
 
-The end-to-end suite drives the real UI: starting a run, holding and releasing, flips, cherries, pause, game over, persistence, reset and a phone-sized viewport. It also fails on any console error. It reads Playwright from `PLAYWRIGHT_PATH` if set, and regenerates the images in `docs/screenshots/`.
+The end-to-end suite drives the real UI: starting a run, holding and releasing, flips, cherries, pause, game over, persistence, reset and a phone-sized viewport. It also fails on any console error. The responsive suite loads every screen at 12 sizes (from a 320x568 iPhone SE to a 2560x1080 ultrawide, portrait and landscape) and fails on clipped content, overlapping HUD groups, page scrolling, tap targets under 34 px or a card that does not fit. Set `SHOOT=1` to save screenshots of each. The suites read Playwright from `PLAYWRIGHT_PATH` if set, and regenerates the images in `docs/screenshots/`.
 
 ## Project structure
 

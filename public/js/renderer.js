@@ -48,14 +48,16 @@
     Renderer.prototype.layout = function (w, h) {
         // World is ~450 units wide when a long gap is on screen; fit that, but
         // cap the zoom so wide monitors do not blow the art up too far.
-        var s = Math.min(w / 460, h / 520, 1.5);
-        s = Math.max(s, 0.55);
+        var short = h < 480;                       // phone held sideways
+        var ground = Math.round(h * (short ? 0.74 : 0.6));
+        var s = short ? Math.min(w / 460, (ground - 52) / 320) : Math.min(w / 460, h / 520, 1.5);
+        s = Math.max(s, 0.5);
         var v = this.view;
         v.s = s;
         v.w = w;
         v.h = h;
         v.originX = Math.max(8, (w - 440 * s) / 2);
-        v.groundY = Math.round(h * 0.6);
+        v.groundY = ground;
     };
 
     Renderer.prototype.worldToScreenX = function (x, offset) {
