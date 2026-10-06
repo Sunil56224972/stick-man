@@ -22,6 +22,7 @@
             maps: ['meadow'],
             equipped: { hero: 'classic', stick: 'wood', map: 'meadow' },
             sound: true,
+            name: '',
             daily: { last: '', streak: 0 },
             feats: {},
             stats: { games: 0, totalScore: 0, cherriesEarned: 0, perfects: 0, bestCombo: 0, flips: 0 }
@@ -58,6 +59,7 @@
         d.equipped.stick = d.sticks.indexOf(eq.stick) >= 0 ? eq.stick : 'wood';
         d.equipped.map = d.maps.indexOf(eq.map) >= 0 ? eq.map : 'meadow';
         d.sound = raw.sound !== false;
+        d.name = typeof raw.name === 'string' ? raw.name.replace(/[^\p{L}\p{N} _.\-]/gu, '').trim().slice(0, 14) : '';
 
         if (raw.daily && typeof raw.daily === 'object') {
             d.daily.last = typeof raw.daily.last === 'string' ? raw.daily.last : '';

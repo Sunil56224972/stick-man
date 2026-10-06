@@ -31,8 +31,22 @@
     STEP_PHASE: 28         // walkDist at which the first foot lands (mid-swing extreme)
     };
 
+    // Seeded level generation for multiplayer. Every platform draws from its own
+    // generator keyed by (seed, index), so two games with the same seed build the
+    // same course no matter how their scores or timing differ.
+    function levelRng(seed, index) {
+        var a = Math.imul(seed ^ Math.imul(index + 1, 0x9E3779B1), 0x85EBCA6B) >>> 0;
+        return function () {
+            a = (a + 0x6D2B79F5) | 0;
+            var t = Math.imul(a ^ (a >>> 15), 1 | a);
+            t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+            return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+        };
+    }
+
     function Game(opts) {
         opts = opts || {};
+        this.seed = opts.seed == null ? null : opts.seed >>> 0;
         this.rng = opts.rng || Math.random;
         this.listener = opts.onEvent || function () {};
         this.reset();
@@ -63,6 +77,7 @@
         this.target = null;    // platform the current stick landed on
         this.perfectHit = false;
 
+        this.made = 1;         // platforms generated so far, the start pad included
         this.platforms = [{ x: C.START_X, w: C.START_W }];
         this.cherries = [];
         for (var i = 0; i < 4; i++) this._addPlatform();
@@ -73,8 +88,10 @@
     };
 
     // Gaps widen and platforms narrow as the score climbs, up to a ceiling.
-    Game.prototype.difficulty = function () {
-        var s = this.score;
+    Game.prototype.setSeed = function (seed) { this.seed = seed == null ? null : seed >>> 0; };
+
+    Game.prototype.difficulty = function (s) {
+        if (s === undefined) s = this.score;
         return {
             gapMin: 45 + Math.min(s * 1.2, 35),
             gapMax: 150 + Math.min(s * 3, 90),
@@ -83,18 +100,23 @@
         };
     };
 
-    Game.prototype._rand = function (a, b) { return a + Math.floor(this.rng() * (b - a + 1)); };
+    Game.prototype._rand = function (a, b, rng) { return a + Math.floor((rng || this.rng)() * (b - a + 1)); };
 
     Game.prototype._addPlatform = function () {
-        var d = this.difficulty();
+        var index = this.made++;
+        // Solo play ramps with the score. A seeded course ramps with the platform
+        // number instead, so everyone in a race faces identical gaps.
+        var seeded = this.seed !== null;
+        var rng = seeded ? levelRng(this.seed, index) : this.rng;
+        var d = this.difficulty(seeded ? index * 2 : undefined);
         var last = this.platforms[this.platforms.length - 1];
         var edge = last.x + last.w;
-        var gap = this._rand(Math.floor(d.gapMin), Math.floor(d.gapMax));
-        var w = this._rand(Math.floor(d.widthMin), Math.floor(d.widthMax));
+        var gap = this._rand(Math.floor(d.gapMin), Math.floor(d.gapMax), rng);
+        var w = this._rand(Math.floor(d.widthMin), Math.floor(d.widthMax), rng);
 
         // Cherries hang under the bridge line, only in gaps wide enough to flip in.
-        if (gap >= 80 && this.rng() < 0.6) {
-            var drift = (this.rng() - 0.5) * gap * 0.25;
+        if (gap >= 80 && rng() < 0.6) {
+            var drift = (rng() - 0.5) * gap * 0.25;
             this.cherries.push({ x: edge + gap / 2 + drift, taken: false });
         }
         this.platforms.push({ x: edge + gap, w: w });
@@ -334,6 +356,7 @@
         }
     };
 
+    Game.levelRng = levelRng;
     Game.C = C;
     SH.Game = Game;
 })(typeof window !== 'undefined' ? window : globalThis);

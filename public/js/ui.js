@@ -74,7 +74,7 @@
 
     UI.show = function (name) { $('screen-' + name).hidden = false; };
     UI.hide = function (name) { $('screen-' + name).hidden = true; };
-    UI.hideAll = function () { ['title', 'pause', 'over', 'armory'].forEach(UI.hide); };
+    UI.hideAll = function () { ['title', 'pause', 'over', 'armory', 'mp', 'leave', 'mpresult'].forEach(UI.hide); };
     UI.hud = function (on) { el.hud.hidden = !on; };
 
     // --- HUD -------------------------------------------------------------------

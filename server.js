@@ -1,10 +1,13 @@
 /*
- * Tiny static file server for local play: `npm start`.
- * Serves ./public only, refuses path traversal, no dependencies.
+ * Tiny game server: `npm start`.
+ * Serves ./public (refuses path traversal) and hosts the multiplayer
+ * WebSocket endpoint at /ws. No dependencies.
  */
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
+const ws = require('./server/ws');
+const rooms = require('./server/rooms');
 
 const ROOT = path.join(__dirname, 'public');
 const PORT = Number(process.env.PORT) || 8089;
@@ -40,6 +43,11 @@ const server = http.createServer((req, res) => {
         fs.createReadStream(file).pipe(res);
     });
 });
+
+// Multiplayer: WebSocket endpoint at /ws. Rooms live in memory, nothing is stored.
+const lobby = rooms.createLobby();
+ws.attach(server, { path: '/ws', onConnection: (conn) => lobby.connect(conn), maxConnections: 400 });
+server.lobby = lobby;
 
 if (require.main === module) {
     server.listen(PORT, () => console.log(`Stick Hero running at http://localhost:${PORT}/`));

@@ -22,6 +22,10 @@
     var bestAtStart = store.data.best;
     var flipHintShown = false;
     var prevScore = 0;        // to spot the dusk and night thresholds
+    var bridges = 0;          // bridges crossed this run, reported to the race server
+    var leaveOpen = false;    // leave-race prompt is up (the race keeps running behind it)
+    var multi = SH.multi;
+    function inRace() { return multi.inRoom() && multi.racing(); }
 
     var COLORS_PERFECT = ['#e4472f', '#f4b73a', '#19d3e6', '#58b368', '#ffffff'];
     var COLORS_CHERRY = ['#e4472f', '#c9341f', '#ff8a70', '#58b368'];
@@ -73,7 +77,10 @@
                 if (d.score >= 10 && prevScore < 10) sound.skyChange(1);
                 else if (d.score >= 20 && prevScore < 20) sound.skyChange(2);
                 prevScore = d.score;
-                if (d.score > store.data.best) {
+                if (multi.inRoom()) {
+                    bridges++;
+                    multi.reportScore(d.score, bridges);
+                } else if (d.score > store.data.best) {
                     store.data.best = d.score;
                     ui.setBest(d.score);
                 }
@@ -115,7 +122,9 @@
                 renderer.shake(2);
                 break;
 
-            case 'over': finishRun(d); break;
+            case 'over':
+                if (multi.inRoom()) finishRace(); else finishRun(d);
+                break;
         }
     }
 
@@ -147,6 +156,80 @@
 
     // --- flow --------------------------------------------------------------------
 
+    // Multiplayer hooks: the lobby borrows the scene, a race borrows the game.
+    function hudMode(isMulti) {
+        doc.getElementById('btn-pause').hidden = isMulti;
+        doc.getElementById('btn-armory').hidden = isMulti;
+        doc.getElementById('btn-leave').hidden = !isMulti;
+    }
+
+    function enterLobbyScene() {
+        holding = false;
+        leaveOpen = false;
+        game.setSeed(null);
+        game.reset();
+        renderer.clearFx();
+        ui.hideAll();
+        ui.hud(false);
+        ui.hint(null);
+        mode = 'lobby';
+    }
+
+    // Seeded course, same for everyone; the sim stays frozen until the server says go.
+    function prepareRace(seed, mapId) {
+        sound.unlock();
+        holding = false;
+        leaveOpen = false;
+        game.setSeed(seed);
+        game.reset();
+        prevScore = 0;
+        bridges = 0;
+        renderer.clearFx();
+        ui.hideAll();
+        ui.hud(true);
+        hudMode(true);
+        syncHud();
+        mode = 'mpwait';
+    }
+
+    function goRace() {
+        if (mode !== 'mpwait') return;
+        mode = 'play';
+        // wait for the GO! banner to clear before the hint takes its spot
+        setTimeout(function () { if (mode === 'play') ui.hint('<b>Hold</b> to grow the stick, <b>release</b> to drop it. Farthest wins.', 3200); }, 800);
+    }
+
+    // This player has fallen; the race goes on for the others.
+    function finishRace() {
+        holding = false;
+        mode = 'mpout';
+        multi.reportDead();
+        sound.gameOver();
+        ui.hint('You\u2019re out. Watching the others finish...');
+    }
+
+    function closeLeave() {
+        leaveOpen = false;
+        ui.hide('leave');
+    }
+
+    function askLeave() {
+        if (!inRace() && mode !== 'mpout') return;
+        if (mode === 'mpout') { leaveRoom(); return; }
+        holding = false;
+        game.cancelStretch();
+        leaveOpen = true;
+        ui.show('leave');
+        var stay = doc.getElementById('btn-leave-stay');
+        if (stay) stay.focus({ preventScroll: true });
+    }
+
+    function leaveRoom() {
+        closeLeave();
+        multi.leave();
+        toTitle();
+    }
+
     function syncHud() {
         ui.setScore(game.score, false);
         ui.setBest(store.data.best);
@@ -155,6 +238,8 @@
     }
 
     function startRun() {
+        hudMode(false);
+        game.setSeed(null);
         sound.unlock();
         holding = false;
         game.reset();
@@ -169,6 +254,10 @@
     }
 
     function toTitle() {
+        if (multi.inRoom()) multi.leave();
+        hudMode(false);
+        leaveOpen = false;
+        game.setSeed(null);
         holding = false;
         game.reset();
         renderer.clearFx();
@@ -181,7 +270,7 @@
     }
 
     function pause() {
-        if (mode !== 'play') return;
+        if (mode !== 'play' || multi.inRoom()) return;
         holding = false;
         game.cancelStretch();
         mode = 'paused';
@@ -197,7 +286,7 @@
     }
 
     function openArmory() {
-        if (ui.armoryOpen) return;
+        if (ui.armoryOpen || multi.inRoom()) return;
         if (mode === 'play') pause();
         armoryReturn = mode;
         // the paused card stays underneath; hide it so only one panel shows
@@ -264,6 +353,16 @@
     on('btn-over-armory', openArmory);
     on('btn-over-home', toTitle);
     on('btn-armory-close', closeArmory);
+    on('btn-title-multi', function () { multi.open(); });
+    on('btn-leave', askLeave);
+    on('btn-leave-stay', closeLeave);
+    on('btn-leave-go', leaveRoom);
+
+    multi.init({
+        sound: sound, store: store, ui: ui,
+        enterLobbyScene: enterLobbyScene, showTitle: toTitle,
+        prepare: prepareRace, go: goRace
+    });
 
     // tapping the dimmed backdrop closes the armory
     doc.getElementById('screen-armory').addEventListener('pointerdown', function (e) {
@@ -273,7 +372,7 @@
     // --- play input --------------------------------------------------------------
 
     function pressStart() {
-        if (mode !== 'play') return;
+        if (mode !== 'play' || leaveOpen) return;
         sound.unlock();
         holding = true;
         game.press();
@@ -292,6 +391,7 @@
     });
     root.addEventListener('pointerup', pressEnd);
     root.addEventListener('pointercancel', pressEnd);
+    // A race never freezes for anyone: losing focus only lets go of the stick.
     root.addEventListener('blur', function () { pressEnd(); pause(); });
     doc.addEventListener('visibilitychange', function () { if (doc.hidden) { pressEnd(); pause(); } });
     app.addEventListener('contextmenu', function (e) { e.preventDefault(); });
@@ -301,14 +401,18 @@
     root.addEventListener('keydown', function (e) {
         var key = e.key;
         var onButton = e.target && e.target.closest && e.target.closest('button');
+        var typing = e.target && e.target.tagName === 'INPUT';
 
         if (key === 'Escape') {
-            if (ui.armoryOpen) closeArmory();
+            if (leaveOpen) closeLeave();
+            else if (inRace() || mode === 'mpout') askLeave();
+            else if (mode === 'lobby') multi.close();
+            else if (ui.armoryOpen) closeArmory();
             else if (mode === 'play') pause();
             else if (mode === 'paused') resume();
             return;
         }
-        if (ui.armoryOpen) return;
+        if (ui.armoryOpen || typing) return;
 
         if (key === 'm' || key === 'M') { toggleSound(); return; }
         if (key === 'a' || key === 'A') { if (mode !== 'paused') openArmory(); return; }
@@ -349,14 +453,16 @@
         renderer.render(game, now, {
             hero: cat.find('heroes', store.data.equipped.hero),
             stick: cat.find('sticks', store.data.equipped.stick),
-            map: cat.find('maps', store.data.equipped.map)
+            map: cat.find('maps', multi.mapId() || store.data.equipped.map)
         });
         ui.tick(now);
     }
 
     toTitle();
     root.requestAnimationFrame(frame);
+    // An invite link (?room=ABCD) drops the player straight into the join form.
+    if (multi.invite) multi.open();
 
     // Handy for the automated browser tests; harmless in production.
-    SH.debug = { game: game, renderer: renderer, store: store, getMode: function () { return mode; } };
+    SH.debug = { game: game, renderer: renderer, store: store, getMode: function () { return mode; }, multi: multi };
 })(window);

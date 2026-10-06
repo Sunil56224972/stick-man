@@ -81,6 +81,20 @@
             <rect x="10.6" y="13.5" width="2.8" height="4" fill="currentColor"/>
             <rect x="7.5" y="17.5" width="9" height="2.6" rx="1" fill="currentColor"/>
         </symbol>
+        <symbol id="i-users" viewBox="0 0 24 24">
+            <circle cx="9" cy="8" r="3.6" fill="currentColor"/>
+            <path d="M2.5 19.5c0-3.8 2.9-6.2 6.5-6.2s6.5 2.4 6.5 6.2z" fill="currentColor"/>
+            <circle cx="17" cy="9" r="2.8" fill="currentColor" opacity=".7"/>
+            <path d="M16.6 13.6c3 .1 5 2 5 5.2h-4.4c0-2-.5-3.7-1.7-4.9.3-.2.7-.3 1.1-.3z" fill="currentColor" opacity=".7"/>
+        </symbol>
+        <symbol id="i-copy" viewBox="0 0 24 24">
+            <rect x="8.5" y="8.5" width="11" height="12" rx="2.4" fill="currentColor"/>
+            <path d="M15.5 5.5v-.6a2 2 0 00-2-2H6a2 2 0 00-2 2v9.6a2 2 0 002 2h.6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+        </symbol>
+        <symbol id="i-exit" viewBox="0 0 24 24">
+            <path d="M10 4H6.4A2.4 2.4 0 004 6.4v11.2A2.4 2.4 0 006.4 20H10" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/>
+            <path d="M9.5 12H20m0 0l-4-4m4 4l-4 4" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+        </symbol>
         <!-- how-to-play pictograms -->
         <symbol id="i-hand-hold" viewBox="0 0 40 40">
             <rect x="17" y="3" width="6" height="22" rx="3" fill="#1d1b2b"/>
@@ -131,6 +145,10 @@
             <button id="btn-sound" class="icon-btn" type="button" aria-label="Toggle sound (M)" title="Sound (M)">
                 <svg class="ico" aria-hidden="true"><use id="sound-use" href="#i-sound-on"/></svg>
             </button>
+            <button id="btn-leave" class="icon-btn icon-btn-label" type="button" aria-label="Leave race (Esc)" title="Leave race (Esc)">
+                <svg class="ico" aria-hidden="true"><use href="#i-exit"/></svg>
+                <span>Leave</span>
+            </button>
             <button id="btn-armory" class="icon-btn icon-btn-label" type="button" aria-label="Open armory (A)" title="Armory (A)">
                 <svg class="ico" aria-hidden="true"><use href="#i-armory"/></svg>
                 <span>Armory</span>
@@ -153,9 +171,14 @@
                 <button id="btn-play" class="btn btn-primary btn-xl" type="button">
                     <svg class="ico" aria-hidden="true"><use href="#i-play"/></svg> Play
                 </button>
-                <button id="btn-title-armory" class="btn btn-paper" type="button">
-                    <svg class="ico" aria-hidden="true"><use href="#i-armory"/></svg> Armory
-                </button>
+                <div class="title-sub">
+                    <button id="btn-title-armory" class="btn btn-paper" type="button">
+                        <svg class="ico" aria-hidden="true"><use href="#i-armory"/></svg> Armory
+                    </button>
+                    <button id="btn-title-multi" class="btn btn-paper" type="button">
+                        <svg class="ico" aria-hidden="true"><use href="#i-users"/></svg> Friends
+                    </button>
+                </div>
             </div>
 
             <ol class="steps" aria-label="How to play">
@@ -250,11 +273,99 @@
         </div>
     </section>
 
+    <!-- Multiplayer: standings strip, countdown, lobby, leave prompt, results -->
+    <ol id="mp-strip" class="mp-strip" aria-label="Race standings" hidden></ol>
+    <div id="mp-count" class="mp-count" aria-live="assertive" hidden></div>
+
+    <section id="screen-mp" class="screen screen-modal" role="dialog" aria-modal="true" aria-labelledby="mp-h" hidden>
+        <div class="panel panel-mp">
+            <header class="mp-head">
+                <div>
+                    <p class="panel-eyebrow">Race your friends</p>
+                    <h2 id="mp-h" class="panel-title panel-title-left">Multiplayer</h2>
+                </div>
+                <button id="btn-mp-close" class="icon-btn icon-btn-light" type="button" aria-label="Back to menu">
+                    <svg class="ico" aria-hidden="true"><use href="#i-close"/></svg>
+                </button>
+            </header>
+
+            <div id="mp-status" class="mp-status" data-state="connecting" role="status">
+                <i class="mp-dot" aria-hidden="true"></i>
+                <span id="mp-status-text">Connecting...</span>
+                <button id="btn-mp-retry" class="link-btn mp-retry" type="button" hidden>Retry</button>
+            </div>
+
+            <div class="mp-body">
+                <div id="mp-view-join" class="mp-join">
+                    <label class="field" for="mp-name"><span>Your name</span>
+                        <input id="mp-name" class="input" type="text" maxlength="14" autocomplete="off" autocapitalize="words" spellcheck="false" placeholder="Player">
+                    </label>
+                    <button id="btn-mp-create" class="btn btn-primary" type="button">
+                        <svg class="ico" aria-hidden="true"><use href="#i-users"/></svg> Create a room
+                    </button>
+                    <div class="mp-or"><span>or join a friend</span></div>
+                    <div class="mp-join-row">
+                        <input id="mp-code" class="input input-code" type="text" maxlength="4" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="CODE" aria-label="Room code">
+                        <button id="btn-mp-join" class="btn btn-gold" type="button">Join</button>
+                    </div>
+                </div>
+
+                <div id="mp-view-lobby" class="mp-lobby" hidden>
+                    <div class="mp-side">
+                        <div class="mp-code-card">
+                            <span class="mp-code-label">Room code</span>
+                            <b id="mp-code-show" class="mp-code-show">----</b>
+                            <button id="btn-mp-copy" class="btn btn-paper btn-sm" type="button">
+                                <svg class="ico" aria-hidden="true"><use href="#i-copy"/></svg> Copy link
+                            </button>
+                        </div>
+                        <div class="stack mp-actions">
+                            <button id="btn-mp-ready" class="btn btn-primary" type="button">Ready</button>
+                            <p id="mp-note" class="mp-note"></p>
+                        </div>
+                    </div>
+                    <div class="mp-main">
+                        <h3 class="section-title">Players <span id="mp-count-label" class="mp-count-label"></span></h3>
+                        <ul id="mp-players" class="mp-players"></ul>
+                        <h3 class="section-title">Map <span id="mp-map-note" class="mp-count-label"></span></h3>
+                        <div id="mp-maps" class="mp-maps" role="group" aria-label="Race map"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="screen-leave" class="screen screen-modal" role="dialog" aria-modal="true" aria-labelledby="leave-h" hidden>
+        <div class="panel panel-small">
+            <h2 id="leave-h" class="panel-title">Leave the race?</h2>
+            <p class="panel-sub">The race keeps going without you and your run ends here.</p>
+            <div class="stack">
+                <button id="btn-leave-stay" class="btn btn-primary" type="button"><svg class="ico" aria-hidden="true"><use href="#i-play"/></svg> Keep racing</button>
+                <button id="btn-leave-go" class="btn btn-paper" type="button"><svg class="ico" aria-hidden="true"><use href="#i-exit"/></svg> Leave</button>
+            </div>
+        </div>
+    </section>
+
+    <section id="screen-mpresult" class="screen screen-modal" role="dialog" aria-modal="true" aria-labelledby="mpr-h" hidden>
+        <div class="panel panel-small panel-mpr">
+            <div id="mpr-stamp" class="stamp" hidden>Winner!</div>
+            <p class="panel-eyebrow">Race over</p>
+            <h2 id="mpr-h" class="panel-title">Results</h2>
+            <p id="mpr-sub" class="panel-sub"></p>
+            <ol id="mpr-list" class="mpr-list"></ol>
+            <div class="stack">
+                <button id="btn-mpr-again" class="btn btn-primary" type="button"><svg class="ico" aria-hidden="true"><use href="#i-restart"/></svg> Rematch</button>
+                <button id="btn-mpr-leave" class="btn btn-paper" type="button"><svg class="ico" aria-hidden="true"><use href="#i-exit"/></svg> Leave room</button>
+            </div>
+        </div>
+    </section>
+
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
 </div>
 
 <noscript><p style="padding:2rem;font-family:sans-serif">Stick Hero needs JavaScript enabled.</p></noscript>
 
+<script src="js/config.js"></script>
 <script src="js/storage.js"></script>
 <script src="js/audio.js"></script>
 <script src="js/maps.js"></script>
@@ -264,6 +375,8 @@
 <script src="js/scenery.js"></script>
 <script src="js/renderer.js"></script>
 <script src="js/ui.js"></script>
+<script src="js/net.js"></script>
+<script src="js/multi.js"></script>
 <script src="js/main.js"></script>
 </body>
 </html>

@@ -383,5 +383,46 @@
         this._tone({ type: 'triangle', freq: 150, to: 105, dur: 0.14, vol: 0.09, delay: 0.1 });
     };
 
+    // --- multiplayer ----------------------------------------------------------------
+
+    // Someone sits down at the table: two wood-bar notes, rising.
+    Sound.prototype.mpJoin = function () {
+        this._bar(note(7), 0.15, 0);
+        this._bar(note(10), 0.15, 0.08);
+    };
+
+    // Ready toggles: a soft knock up, or a knock down when cancelled.
+    Sound.prototype.mpReady = function (on) {
+        this._bar(note(on ? 8 : 5), 0.15, 0);
+        this._burst({ filter: 'bandpass', freq: 2400, q: 1.5, dur: 0.025, vol: 0.1 });
+    };
+
+    // One count of the 3-2-1: a dry wood-block tick.
+    Sound.prototype.mpTick = function () {
+        this._tone({ type: 'sine', freq: 900, to: 640, dur: 0.07, vol: 0.24 });
+        this._burst({ filter: 'bandpass', freq: 2600, q: 1.6, dur: 0.03, vol: 0.14 });
+    };
+
+    // Go: taiko hit and an open chord.
+    Sound.prototype.mpGo = function () {
+        this._taiko(0.42, 0);
+        [note(5), note(8), note(10)].forEach(function (n, i) { this._pluck(n, 0.15, 0.02 + i * 0.03, 0.5); }, this);
+        this._burst({ filter: 'highpass', freq: 5000, dur: 0.3, vol: 0.06, attack: 0.02, reverb: 0.5 });
+    };
+
+    // A rival has fallen: a single low, dull note so you notice but are not startled.
+    Sound.prototype.mpOut = function () {
+        this._tone({ type: 'sine', freq: 300, to: 130, dur: 0.28, vol: 0.13, reverb: 0.2 });
+    };
+
+    // Winner's flourish: a climbing run into a double taiko.
+    Sound.prototype.mpWin = function () {
+        [note(5), note(7), note(8), note(10), note(12), note(13)].forEach(function (n, i) {
+            this._pluck(n, 0.13, 0.3 + i * 0.09, 0.6);
+        }, this);
+        this._taiko(0.3, 0.9);
+        this._taiko(0.3, 1.05);
+    };
+
     SH.Sound = Sound;
 })(typeof window !== 'undefined' ? window : globalThis);
