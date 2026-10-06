@@ -145,6 +145,22 @@ test('unknown room and full room are refused', () => {
     const x = client(s.lobby); x.tx({ t: 'join', code });
     assert.strictEqual(x.last('err').code, 'full');
 });
+test('a 1 vs 1 room holds exactly two players and starts with one friend', () => {
+    const s = setup(); const h = client(s.lobby); h.tx({ t: 'create', name: 'H', size: 2 });
+    const j = h.last('joined').room;
+    assert.strictEqual(j.max, 2);
+    const code = j.code;
+    const b = client(s.lobby); b.tx({ t: 'join', code, name: 'B' });
+    assert.strictEqual(b.last('joined').room.max, 2);
+    const c = client(s.lobby); c.tx({ t: 'join', code, name: 'C' });
+    assert.strictEqual(c.last('err').code, 'full');
+    b.tx({ t: 'ready', ready: true }); h.tx({ t: 'start' });
+    assert.ok(h.has('countdown') && b.has('countdown'));
+});
+test('create with a bogus size falls back to a 4 player party', () => {
+    const s = setup(); const h = client(s.lobby); h.tx({ t: 'create', size: 99 });
+    assert.strictEqual(h.last('joined').room.max, 4);
+});
 test('start needs a host, a friend and everyone ready', () => {
     const r = room2();
     r.b.tx({ t: 'start' }); assert.strictEqual(r.b.last('err').code, 'not-host');

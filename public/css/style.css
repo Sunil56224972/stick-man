@@ -613,6 +613,16 @@ button:focus-visible, .tab:focus-visible {
 .input-code { font-family: var(--display); font-weight: 400; font-size: 28px; letter-spacing: 8px; text-align: center; text-transform: uppercase; padding: 0 0 0 8px; }
 
 .mp-join .btn-primary { width: 100%; }
+.mp-mode { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 0 0 12px; }
+.mp-mode-opt {
+    display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 8px 6px;
+    font-family: var(--body); color: var(--ink); background: #fffaf0;
+    border: 2.5px solid var(--ink); border-radius: 12px; cursor: pointer; transition: transform .08s;
+}
+.mp-mode-opt b { font-family: var(--display); font-weight: 400; font-size: 20px; line-height: 1.1; }
+.mp-mode-opt small { font-weight: 800; font-size: 11px; opacity: .65; }
+.mp-mode-opt:active { transform: translateY(2px); }
+.mp-mode-opt.is-on { background: #e4f6e8; box-shadow: 0 0 0 3px var(--mint); }
 .mp-or { display: flex; align-items: center; gap: 10px; margin: 16px 0 12px; font-size: 12px; letter-spacing: 1.3px; text-transform: uppercase; opacity: .6; }
 .mp-or::before, .mp-or::after { content: ''; flex: 1; height: 3px; background: var(--ink); border-radius: 2px; opacity: .35; }
 .mp-join-row { display: flex; gap: 10px; }
@@ -854,7 +864,11 @@ button:focus-visible, .tab:focus-visible {
     .mp-maps { grid-template-columns: repeat(6, 1fr); gap: 5px; }
     .mp-join { display: grid; grid-template-columns: 1fr 1fr; column-gap: 14px; align-items: end; }
     .mp-join .field { grid-column: 1; margin: 0; }
-    .mp-join > .btn-primary { grid-column: 1; margin-top: 8px; }
+    .mp-mode { grid-column: 1; grid-row: 2; margin: 8px 0 0; }
+    .mp-mode-opt { flex-direction: row; justify-content: center; gap: 6px; padding: 4px 6px; min-height: 36px; }
+    .mp-mode-opt small { display: none; }
+    .mp-mode-opt b { font-size: 16px; }
+    .mp-join > .btn-primary { grid-column: 1; grid-row: 3; margin-top: 8px; }
     .mp-or { grid-column: 2; grid-row: 1; margin: 0 0 4px; }
     .mp-join-row { grid-column: 2; grid-row: 2; }
     .mp-strip { top: calc(8px + var(--safe-t) + 74px); }

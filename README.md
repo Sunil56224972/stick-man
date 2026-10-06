@@ -1,6 +1,6 @@
 # Stick Hero
 
-A hand-drawn arcade bridge game. Hold to grow a stick, release to drop it, and walk across. Miss the gap and you fall. Play solo, or race up to three friends on the same course in real time. Built with plain HTML5 Canvas, vanilla JavaScript and a dependency-free Node server: no frameworks, no bundler, no build step.
+A hand-drawn arcade bridge game. Hold to grow a stick, release to drop it, and walk across. Miss the gap and you fall. Play solo, race a friend 1 vs 1, or run a party of up to four on the same course in real time. Built with plain HTML5 Canvas, vanilla JavaScript and a dependency-free Node server: no frameworks, no bundler, no build step.
 
 ![Title screen](docs/screenshots/title.png)
 
@@ -12,7 +12,7 @@ A hand-drawn arcade bridge game. Hold to grow a stick, release to drop it, and w
 - Armory with 6 heroes and 6 stick styles, each with a rarity tier, all drawn in code (no image assets).
 - 12 feats that pay out cherries, a Records tab with lifetime stats, and a daily gift with a streak bonus.
 - Six maps, each with its own sky, three-layer parallax scenery, pillar material and weather: Pine Meadow (fireflies), Sakura Shrine (petals), Dune Canyon (dust), Frozen Peaks (snow and aurora), Neon Harbor (rain and a lit skyline) and Ember Caldera (embers). Every map blends day, dusk and night as your score climbs, and the armory previews cycle through all three.
-- Online races for up to four players: create a room, share a 4-letter code or an invite link, pick a map and race the same course. See [Multiplayer](#multiplayer).
+- Online races, 1 vs 1 or a party of up to four players: create a room, share a 4-letter code or an invite link, pick a map and race the same course. See [Multiplayer](#multiplayer).
 - Fully synthesised soundtrack of effects, no audio files: a creaking bamboo stick that rises in pitch as it grows, wood-on-stone knocks, soft sandal footsteps locked to the leg animation, taiko impacts and koto-style plucks. Everything is tuned to one pentatonic scale, perfect combos climb it, and a temple bell marks dusk and night. Mute with the speaker button or `M`.
 - Fully responsive: phones in portrait and landscape, tablets, laptops and ultrawide monitors. Safe-area insets keep the HUD clear of notches, cards scroll instead of clipping on short screens, and tap targets stay thumb-sized.
 - Works with mouse, touch and keyboard.
@@ -55,7 +55,7 @@ Maps are bought with cherries in the armory's Maps tab and apply to the next fra
 Press **Friends** on the title screen.
 
 1. One player enters a name and taps **Create a room**. The lobby shows a 4-letter code and a **Copy link** button.
-2. Friends open the invite link (`?room=ABCD`) or type the code under **or join a friend**. A room holds up to four players.
+2. Friends open the invite link (`?room=ABCD`) or type the code under **or join a friend**. Pick **1 vs 1** (two seats) or **Party** (up to four) before you create the room.
 3. The host picks the map. Everyone else taps **I'm ready**, then the host taps **Start race**.
 4. A 3-2-1 countdown plays, then everyone races the **same seeded course** on their own screen. A strip under the score shows live standings, and anyone who falls is marked out.
 5. When the last player is out the results card ranks everyone by score. A tie goes to whoever stopped scoring first. **Rematch** returns the room to the lobby.

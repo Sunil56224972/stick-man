@@ -17,6 +17,7 @@
 
     var DOTS = ['#e4472f', '#4aa8d8', '#3fae78', '#f4b73a'];
     var MAX = 4;
+    var size = 2;           // seats chosen for the next room: 2 = 1 vs 1, 4 = party
 
     var M = {
         state: 'idle',     // idle | join | lobby | countdown | race | results
@@ -58,7 +59,7 @@
         api = hooks;
         [
             'screen-mp', 'mp-status', 'mp-status-text', 'btn-mp-retry', 'mp-view-join', 'mp-view-lobby', 'mp-name', 'mp-code',
-            'btn-mp-create', 'btn-mp-join', 'mp-code-show', 'btn-mp-copy', 'btn-mp-ready', 'mp-note', 'mp-players',
+            'btn-mp-create', 'mp-mode', 'btn-mp-join', 'mp-code-show', 'btn-mp-copy', 'btn-mp-ready', 'mp-note', 'mp-players',
             'mp-count-label', 'mp-maps', 'mp-map-note', 'mp-strip', 'mp-count', 'screen-mpresult', 'mpr-list', 'mpr-sub',
             'mpr-stamp', 'btn-mpr-again', 'btn-mpr-leave', 'btn-mp-close'
         ].forEach(function (id) { el[id] = $(id); });
@@ -74,6 +75,17 @@
         el['btn-mp-close'].addEventListener('click', function () { api.sound.click(); M.close(); });
         el['btn-mp-retry'].addEventListener('click', function () { api.sound.click(); connect(); });
         el['btn-mp-create'].addEventListener('click', onCreate);
+        el['mp-mode'].addEventListener('click', function (e) {
+            var b = e.target.closest('[data-size]');
+            if (!b) return;
+            size = b.dataset.size === '2' ? 2 : 4;
+            api.sound.click();
+            [].forEach.call(el['mp-mode'].querySelectorAll('[data-size]'), function (x) {
+                var on = x === b;
+                x.classList.toggle('is-on', on);
+                x.setAttribute('aria-checked', on ? 'true' : 'false');
+            });
+        });
         el['btn-mp-join'].addEventListener('click', onJoin);
         el['btn-mp-copy'].addEventListener('click', copyInvite);
         el['btn-mp-ready'].addEventListener('click', onReadyButton);
@@ -175,7 +187,7 @@
     function onCreate() {
         api.sound.click();
         var name = saveName();
-        ensureOnline(function () { SH.net.send({ t: 'create', name: name, map: api.store.data.equipped.map }); });
+        ensureOnline(function () { SH.net.send({ t: 'create', name: name, map: api.store.data.equipped.map, size: size }); });
     }
 
     function onJoin() {
@@ -321,7 +333,7 @@
         if (!room) return;
         var host = isHost(), me = player(M.me);
         el['mp-code-show'].textContent = room.code;
-        el['mp-count-label'].textContent = room.players.length + ' / ' + MAX;
+        el['mp-count-label'].textContent = room.players.length + ' / ' + (room.max || MAX);
 
         var html = '';
         room.players.forEach(function (p, i) {
@@ -332,7 +344,7 @@
                 (p.id === M.me ? '<span class="mp-tag">You</span>' : '') +
                 '<span class="mp-pill ' + (p.ready || p.id === room.host ? 'is-ready' : '') + '">' + (p.id === room.host ? 'Host' : p.ready ? 'Ready' : 'Waiting') + '</span></li>';
         });
-        for (var s = room.players.length; s < MAX; s++) {
+        for (var s = room.players.length; s < (room.max || MAX); s++) {
             html += '<li class="mp-player is-empty"><i class="mp-swatch"></i><span class="mp-name">Open seat</span></li>';
         }
         el['mp-players'].innerHTML = html;

@@ -13,7 +13,8 @@
  */
 'use strict';
 
-const MAX_PLAYERS = 4;
+const MAX_PLAYERS = 4;       // largest room (party)
+const DUEL_PLAYERS = 2;      // 1 vs 1 room
 const MIN_TO_START = 2;
 const COUNTDOWN_MS = 3000;
 const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no I, O, 0, 1
@@ -81,7 +82,7 @@ function createLobby(opts) {
             host: room.host,
             map: room.map,
             seed: room.seed,
-            max: MAX_PLAYERS,
+            max: room.max,
             players: room.players.map((p) => ({
                 id: p.id, name: p.name, ready: p.ready, score: p.score,
                 alive: p.alive, connected: p.connected,
@@ -204,7 +205,8 @@ function createLobby(opts) {
         if (!code) return fail(p, 'busy', 'Could not make a room code.');
         const room = {
             code: code, state: 'lobby', host: p.id, map: 'meadow', seed: 0,
-            players: [], timer: null, afk: null, raceStart: 0
+            players: [], timer: null, afk: null, raceStart: 0,
+            max: m.size === DUEL_PLAYERS ? DUEL_PLAYERS : MAX_PLAYERS
         };
         if (typeof m.map === 'string' && /^[a-z]{2,12}$/.test(m.map)) room.map = m.map;
         rooms.set(code, room);
@@ -216,7 +218,7 @@ function createLobby(opts) {
         const room = rooms.get(normalizeCode(m.code));
         if (!room) return fail(p, 'no-room', 'No room with that code.');
         if (room.state !== 'lobby') return fail(p, 'started', 'That race has already started.');
-        if (room.players.length >= MAX_PLAYERS) return fail(p, 'full', 'That room is full.');
+        if (room.players.length >= room.max) return fail(p, 'full', 'That room is full.');
         enter(room, p, m.name);
     }
 
@@ -341,5 +343,5 @@ function createLobby(opts) {
 
 module.exports = {
     createLobby, sanitizeName, normalizeCode,
-    MAX_PLAYERS, MIN_TO_START, COUNTDOWN_MS, MIN_BRIDGE_MS, AFK_MS
+    MAX_PLAYERS, DUEL_PLAYERS, MIN_TO_START, COUNTDOWN_MS, MIN_BRIDGE_MS, AFK_MS
 };

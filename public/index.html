@@ -300,6 +300,10 @@
                     <label class="field" for="mp-name"><span>Your name</span>
                         <input id="mp-name" class="input" type="text" maxlength="14" autocomplete="off" autocapitalize="words" spellcheck="false" placeholder="Player">
                     </label>
+                    <div id="mp-mode" class="mp-mode" role="radiogroup" aria-label="Race type">
+                        <button type="button" class="mp-mode-opt is-on" role="radio" aria-checked="true" data-size="2"><b>1 vs 1</b><small>You and a friend</small></button>
+                        <button type="button" class="mp-mode-opt" role="radio" aria-checked="false" data-size="4"><b>Party</b><small>Up to 4 players</small></button>
+                    </div>
                     <button id="btn-mp-create" class="btn btn-primary" type="button">
                         <svg class="ico" aria-hidden="true"><use href="#i-users"/></svg> Create a room
                     </button>
