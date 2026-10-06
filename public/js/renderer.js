@@ -10,8 +10,9 @@
     var SH = (root.SH = root.SH || {});
     var D = SH.draw;
 
-    function Renderer(canvas) {
+    function Renderer(canvas, opts) {
         this.canvas = canvas;
+        this.mini = !!(opts && opts.mini);   // small spectator panel: fit the world, no weather
         this.themeT = 0;          // 0 day, 1 dusk, 2 night (animated)
         this.palette = {};
         this.particles = [];
@@ -30,6 +31,11 @@
     Renderer.prototype.layout = function (w, h) {
         // World is ~450 units wide when a long gap is on screen; fit that, but
         // cap the zoom so wide monitors do not blow the art up too far.
+        if (this.mini) {
+            var g = Math.round(h * 0.8), ms = Math.max(0.12, Math.min(w / 330, g / 150));
+            this.view = { s: ms, w: w, h: h, groundY: g, originX: 6, mini: true };
+            return;
+        }
         var short = h < 480;                       // phone held sideways
         var ground = Math.round(h * (short ? 0.74 : 0.6));
         var s = short ? Math.min(w / 460, (ground - 52) / 320) : Math.min(w / 460, h / 520, 1.5);
@@ -150,8 +156,10 @@
 
         // weather falls in front of the scene, behind the HUD
         var night = Math.max(0, this.themeT - 1);
-        this.weather.step(this.map.weather, v.w, v.h, dt, night);
-        this.weather.draw(ctx, now, night);
+        if (!this.mini) {
+            this.weather.step(this.map.weather, v.w, v.h, dt, night);
+            this.weather.draw(ctx, now, night);
+        }
 
         ctx.restore();
     };

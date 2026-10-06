@@ -48,6 +48,9 @@
         opts = opts || {};
         this.seed = opts.seed == null ? null : opts.seed >>> 0;
         this.rng = opts.rng || Math.random;
+        // A ghost is a read-only copy of another player's run, kept in step by
+        // mirror(). It never scores or builds platforms on its own.
+        this.ghost = !!opts.ghost;
         this.listener = opts.onEvent || function () {};
         this.reset();
     }
@@ -63,6 +66,7 @@
         this.cherriesRun = 0;
         this.flips = 0;
         this.time = 0;
+        this.round = 0;        // bridges fully crossed (stick index)
 
         this.offset = 0;       // camera scroll
         this.goal = 0;         // camera target while transitioning
@@ -226,14 +230,20 @@
         }
     };
 
+    // Platform the given stick lands on once dropped, or null for a miss.
+    Game.prototype._hit = function (s) {
+        var end = s.x + s.length;
+        for (var i = 0; i < this.platforms.length; i++) {
+            var p = this.platforms[i];
+            if (p.x < end && end < p.x + p.w) return p;
+        }
+        return null;
+    };
+
     Game.prototype._drop = function () {
         var s = this.currentStick();
         var end = s.x + s.length;
-        var hit = null;
-        for (var i = 0; i < this.platforms.length; i++) {
-            var p = this.platforms[i];
-            if (p.x < end && end < p.x + p.w) { hit = p; break; }
-        }
+        var hit = this._hit(s);
         this.target = hit;
         this.perfectHit = false;
         this.emit('drop', { hit: !!hit });
@@ -254,7 +264,7 @@
                 this.emit('point', { x: end, bonus: 1 });
             }
             this.emit('score', { score: this.score });
-            this._addPlatform();
+            if (!this.ghost) this._addPlatform();
         } else {
             this.combo = 0;
         }
@@ -317,6 +327,7 @@
     Game.prototype._finishTransition = function () {
         var t = this.target;
         this.sticks.push({ x: t.x + t.w, length: 0, rotation: 0 });
+        this.round++;
         this.target = null;
         this.flipped = false;
         this.phase = 'waiting';
@@ -353,6 +364,66 @@
         if (this.fallTimer >= C.FALL_TIME) {
             this.phase = 'over';
             this.emit('over', this.run());
+        }
+    };
+
+    // --- live spectating ----------------------------------------------------
+    // The race server relays each player's snapshot to the others. A ghost runs
+    // the normal simulation between snapshots, so it moves smoothly at any
+    // frame rate, and each snapshot nudges it back onto the real run.
+
+    var RANK = { waiting: 0, stretching: 1, turning: 2, walking: 3, transitioning: 4, falling: 5, over: 6 };
+    function r1(n) { return Math.round(n * 10) / 10; }
+
+    Game.prototype.snapshot = function () {
+        var s = this.currentStick();
+        return {
+            p: this.phase, k: this.round, m: this.made, sc: this.score,
+            x: r1(this.heroX), o: r1(this.offset), sx: s.x, sl: r1(s.length), sr: r1(s.rotation),
+            f: this.flipped ? 1 : 0, w: r1(this.walkDist), fk: this.fallKind, ft: Math.round(this.fallTimer), fy: r1(this.heroY)
+        };
+    };
+
+    function blend(a, b, snap) { return snap || Math.abs(b - a) > 50 ? b : a + (b - a) * 0.3; }
+
+    Game.prototype.mirror = function (s) {
+        if (!s || RANK[s.p] === undefined) return;
+        while (this.made < s.m && this.made < 5000) this._addPlatform();
+        this.score = s.sc;
+
+        var cur = this.currentStick();
+        var fresh = false;
+        if (Math.abs(cur.x - s.sx) > 0.5) {
+            // a stick we have not seen yet: park the old one and start the new
+            if (cur.length > 0 && cur.rotation < 90) cur.rotation = 90;
+            cur = { x: s.sx, length: 0, rotation: 0 };
+            this.sticks.push(cur);
+            this.round = s.k;
+            this.target = null;
+            fresh = true;
+        }
+        var mine = fresh ? -1 : this.round * 10 + RANK[this.phase];
+        if (s.k * 10 + RANK[s.p] < mine) return;   // we are already ahead of this snapshot
+
+        var changed = fresh || s.p !== this.phase;
+        this.phase = s.p;
+        this.flipped = !!s.f;
+        this.fallKind = s.fk || null;
+        cur.length = blend(cur.length, s.sl, changed);
+        cur.rotation = blend(cur.rotation, s.sr, changed);
+        this.heroX = blend(this.heroX, s.x, changed);
+        this.offset = blend(this.offset, s.o, changed);
+        this.walkDist = blend(this.walkDist, s.w, changed);
+        if (s.p === 'falling' || s.p === 'over') this.heroY = s.fy;
+        if (!changed) return;
+
+        this.target = RANK[s.p] >= 3 ? this._hit(cur) : null;
+        if (s.p === 'walking') this.stepIdx = Math.floor((this.walkDist + C.STEP_PHASE) / C.STEP_DIST);
+        if (s.p === 'transitioning' && this.target) this.goal = this.target.x + this.target.w - 100;
+        if (s.p === 'falling' || s.p === 'over') {
+            this.fallTimer = s.ft;
+            this.heroVY = C.GRAVITY * s.ft;
+            this.heroVX = this.fallKind === 'pillar' ? -0.07 : 0.04;
         }
     };
 

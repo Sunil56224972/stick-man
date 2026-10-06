@@ -43,6 +43,8 @@
         clearTimeout(goTimer);
     }
 
+    function look() { var e = api.store.data.equipped; return { hero: e.hero, stick: e.stick }; }
+
     function cleanName(s) { return String(s || '').replace(/[^\p{L}\p{N} _.\-]/gu, '').trim().slice(0, 14); }
     function cleanCode(s) { return String(s || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 4); }
 
@@ -59,7 +61,7 @@
         api = hooks;
         [
             'screen-mp', 'mp-status', 'mp-status-text', 'btn-mp-retry', 'mp-view-join', 'mp-view-lobby', 'mp-name', 'mp-code',
-            'btn-mp-create', 'mp-mode', 'btn-mp-join', 'mp-code-show', 'btn-mp-copy', 'btn-mp-ready', 'mp-note', 'mp-players',
+            'btn-mp-create', 'mp-mode', 'mp-views', 'btn-mp-join', 'mp-code-show', 'btn-mp-copy', 'btn-mp-ready', 'mp-note', 'mp-players',
             'mp-count-label', 'mp-maps', 'mp-map-note', 'mp-strip', 'mp-count', 'screen-mpresult', 'mpr-list', 'mpr-sub',
             'mpr-stamp', 'btn-mpr-again', 'btn-mpr-leave', 'btn-mp-close'
         ].forEach(function (id) { el[id] = $(id); });
@@ -134,6 +136,7 @@
 
     M.leave = function () {
         clearTimers();
+        destroyViews();
         if (SH.net.open && M.room) SH.net.send({ t: 'leave' });
         SH.net.close();
         M.room = null;
@@ -187,7 +190,7 @@
     function onCreate() {
         api.sound.click();
         var name = saveName();
-        ensureOnline(function () { SH.net.send({ t: 'create', name: name, map: api.store.data.equipped.map, size: size }); });
+        ensureOnline(function () { SH.net.send({ t: 'create', name: name, map: api.store.data.equipped.map, size: size, hero: look().hero, stick: look().stick }); });
     }
 
     function onJoin() {
@@ -195,7 +198,7 @@
         if (code.length !== 4) { api.sound.nope(); api.ui.toast('Enter the 4-letter room code'); el['mp-code'].focus(); return; }
         api.sound.click();
         var name = saveName();
-        ensureOnline(function () { SH.net.send({ t: 'join', code: code, name: name }); });
+        ensureOnline(function () { SH.net.send({ t: 'join', code: code, name: name, hero: look().hero, stick: look().stick }); });
     }
 
     function inviteLink() {
@@ -258,6 +261,7 @@
                 setRoom(m.room);
                 if (M.state === 'results' && m.room.state === 'lobby') {
                     M.state = 'lobby';
+                    destroyViews();
                     api.ui.hide('mpresult');
                     api.enterLobbyScene();
                     showView('lobby');
@@ -280,6 +284,12 @@
                 goRace();
                 break;
 
+            case 'view': {
+                var vw = views[m.id];
+                if (vw) vw.game.mirror(m.s);
+                break;
+            }
+
             case 'score': {
                 var p = player(m.id);
                 if (p) p.score = m.score;
@@ -290,6 +300,7 @@
             case 'out': {
                 var q = player(m.id);
                 if (q) { q.alive = false; q.score = m.score; }
+                if (views[m.id]) views[m.id].tile.classList.add('is-out');
                 if (m.id !== M.me) api.sound.mpOut();
                 renderStrip();
                 break;
@@ -389,6 +400,7 @@
         api.ui.hide('mp');
         api.ui.hide('mpresult');
         api.prepare(M.room.seed, M.room.map);
+        buildViews();
         renderStrip();
         var steps = Math.max(1, Math.round(ms / 1000));
         for (var i = 0; i < steps; i++) {
@@ -420,6 +432,88 @@
         goTimer = setTimeout(function () { el['mp-count'].hidden = true; }, 750);
         renderStrip();
     }
+
+    // --- live views --------------------------------------------------------------------------
+    // Every other player's run is replayed in a small panel from the snapshots
+    // their device sends, so you watch the race as well as run it.
+
+    var views = {}, lastView = 0, lastViewPhase = '';
+
+    function buildViews() {
+        destroyViews();
+        var box = el['mp-views'];
+        box.innerHTML = '';
+        var room = M.room, n = 0;
+        room.players.forEach(function (p) {
+            if (p.id === M.me || !p.connected) return;
+            var tile = doc.createElement('div');
+            tile.className = 'mp-tile';
+            tile.style.setProperty('--c', colorOf(p));
+            var cv = doc.createElement('canvas');
+            cv.setAttribute('aria-hidden', 'true');
+            var tag = doc.createElement('span');
+            tag.className = 'mp-tile-tag';
+            var dot = doc.createElement('i');
+            var nm = doc.createElement('b');
+            nm.textContent = p.name;
+            var sc = doc.createElement('em');
+            sc.textContent = '0';
+            var out = doc.createElement('span');
+            out.className = 'mp-tile-out';
+            out.textContent = 'OUT';
+            tag.appendChild(dot); tag.appendChild(nm); tag.appendChild(sc);
+            tile.appendChild(cv); tile.appendChild(tag); tile.appendChild(out);
+            box.appendChild(tile);
+
+            var rend = new SH.Renderer(cv, { mini: true });
+            var game = new SH.Game({
+                seed: room.seed, ghost: true,
+                onEvent: function (name, d) {
+                    if (name === 'drop') rend.dust(game.currentStick().x + game.currentStick().length, -2, 4);
+                    else if (name === 'perfect') rend.burst(d.x, -6, 12, ['#e4472f', '#f4b73a', '#ffffff'], 1);
+                    else if (name === 'crash') { rend.shake(6); rend.burst(game.heroX, -16, 14, ['#f6ecd6', '#e4472f'], 1); }
+                    else if (name === 'cherry') rend.burst(d.x, 22, 8, ['#e4472f', '#ff8a70'], 0.7);
+                }
+            });
+            views[p.id] = {
+                game: game, renderer: rend, tile: tile, score: sc, shown: 0,
+                skins: {
+                    hero: SH.catalog.find('heroes', p.hero), stick: SH.catalog.find('sticks', p.stick),
+                    map: SH.catalog.find('maps', room.map)
+                }
+            };
+            n++;
+        });
+        box.dataset.count = String(n);
+        box.hidden = n === 0;
+    }
+
+    function destroyViews() {
+        views = {};
+        if (el['mp-views']) { el['mp-views'].hidden = true; el['mp-views'].innerHTML = ''; }
+    }
+
+    // Called every frame from the main loop.
+    M.frame = function (now, dt) {
+        var box = el['mp-views'];
+        if (!box || box.hidden) return;
+        for (var id in views) {
+            var v = views[id];
+            v.game.update(dt);
+            v.renderer.render(v.game, now, v.skins);
+            var s = v.game.score;
+            if (s !== v.shown) { v.shown = s; v.score.textContent = s; }
+        }
+    };
+
+    // Sends this player's own view to the room, about 20 times a second and at once on a phase change.
+    M.reportView = function (game, now) {
+        if (M.state !== 'race') return;
+        if (now - lastView < 50 && game.phase === lastViewPhase) return;
+        lastView = now;
+        lastViewPhase = game.phase;
+        SH.net.send({ t: 'view', s: game.snapshot() });
+    };
 
     M.reportScore = function (score, bridges) {
         if (M.state === 'race') SH.net.send({ t: 'score', score: score, n: bridges });
@@ -476,11 +570,13 @@
         // let the last fall play out before the card covers it
         resultTimer = setTimeout(function () {
             if (M.state !== 'results') return;
+            destroyViews();
             api.ui.show('mpresult');
             if (iWon) api.sound.mpWin(); else api.sound.gameOver();
             el['btn-mpr-again'].focus({ preventScroll: true });
         }, 900);
     }
 
+    M.views = function () { return views; };
     SH.multi = M;
 })(window);

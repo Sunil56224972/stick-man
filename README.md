@@ -57,7 +57,7 @@ Press **Friends** on the title screen.
 1. One player enters a name and taps **Create a room**. The lobby shows a 4-letter code and a **Copy link** button.
 2. Friends open the invite link (`?room=ABCD`) or type the code under **or join a friend**. Pick **1 vs 1** (two seats) or **Party** (up to four) before you create the room.
 3. The host picks the map. Everyone else taps **I'm ready**, then the host taps **Start race**.
-4. A 3-2-1 countdown plays, then everyone races the **same seeded course** on their own screen. A strip under the score shows live standings, and anyone who falls is marked out.
+4. A 3-2-1 countdown plays, then everyone races the **same seeded course** on their own screen. A strip under the score shows live standings, and a small live panel for every other racer replays their run as it happens: their hero, their bridge, their score. Anyone who falls is greyed out.
 5. When the last player is out the results card ranks everyone by score. A tie goes to whoever stopped scoring first. **Rematch** returns the room to the lobby.
 
 | Screen | Phone |
@@ -93,6 +93,7 @@ You can also test with `?server=host:port` on the URL. When the server cannot be
 | `create`, `join` | Make a room, or enter one by code. |
 | `ready`, `map`, `start`, `again` | Lobby actions. Only the host can use `map` and `start`. |
 | `score` | `{score, n}`: current score and bridges crossed. |
+| `view` | This player's live snapshot, about 20 a second. |
 | `dead`, `leave`, `ping` | Fell out, left, keep-alive. |
 
 | Server to client | Purpose |
@@ -100,7 +101,10 @@ You can also test with `?server=host:port` on the URL. When the server cannot be
 | `joined`, `room` | Full room snapshot: players, ready flags, host, map. |
 | `countdown`, `go` | Start sequence. `countdown` carries the shared seed. |
 | `score`, `out` | Live standings. |
+| `view` | Another racer's live snapshot (phase, hero position, stick, score), relayed up to 25 times a second. |
 | `results`, `notice`, `err` | Final ranking and messages. |
+
+Live panels do not stream video. Each device sends a tiny snapshot of its own run, and every other device replays it in a small canvas using the same game simulation (a read-only `ghost`), so the motion stays smooth between snapshots and costs a few kilobytes a second. The server only copies known numeric fields, clamps their ranges and throttles the rate.
 
 The server is authoritative for the room: who is in it, who is ready, when the race starts and who won. It does not run the physics, so it sanity-checks what clients report. A score is accepted only if it is possible for the number of bridges claimed (`score <= n x (n+1)`) and the time elapsed since the start (one bridge takes at least 0.6 s). Names are stripped to letters, digits and a few symbols, messages are rate limited, and a silent player is counted out after 45 s. If the host leaves, the next player becomes host.
 
@@ -145,7 +149,7 @@ npm run test:multi  # 33 checks: two real browsers create, join, race and rematc
 npm run test:responsive  # 753 layout checks across 12 device sizes
 ```
 
-The multiplayer suite opens two browser windows (one phone-sized) against the real server and checks the lobby, invite link, map sync, countdown, identical courses, live scores, out markers, results and rematch. The end-to-end suite drives the real UI: starting a run, holding and releasing, flips, cherries, pause, game over, persistence, reset and a phone-sized viewport. It also fails on any console error. The responsive suite loads every screen at 12 sizes (from a 320x568 iPhone SE to a 2560x1080 ultrawide, portrait and landscape) and fails on clipped content, overlapping HUD groups, page scrolling, tap targets under 34 px or a card that does not fit. Set `SHOOT=1` to save screenshots of each. The suites read Playwright from `PLAYWRIGHT_PATH` if set, and regenerates the images in `docs/screenshots/`.
+The multiplayer suite opens two browser windows (one phone-sized) against the real server and checks the lobby, invite link, map sync, countdown, identical courses, live scores, live panels that follow the other player's run, out markers, results and rematch. The end-to-end suite drives the real UI: starting a run, holding and releasing, flips, cherries, pause, game over, persistence, reset and a phone-sized viewport. It also fails on any console error. The responsive suite loads every screen at 12 sizes (from a 320x568 iPhone SE to a 2560x1080 ultrawide, portrait and landscape) and fails on clipped content, overlapping HUD groups, page scrolling, tap targets under 34 px or a card that does not fit. Set `SHOOT=1` to save screenshots of each. The suites read Playwright from `PLAYWRIGHT_PATH` if set, and regenerates the images in `docs/screenshots/`.
 
 ## Project structure
 
@@ -165,7 +169,7 @@ public/
     audio.js        Web Audio sound synthesis
     ui.js           HUD, armory, toasts, dialogs
     net.js          WebSocket client with timeout and error states
-    multi.js        lobby, standings strip, countdown, results
+    multi.js        lobby, standings strip, live panels, countdown, results
     config.js       multiplayer server address
     main.js         input, game loop, wiring
 server.js           static file server plus the /ws endpoint

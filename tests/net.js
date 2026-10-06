@@ -161,6 +161,43 @@ test('create with a bogus size falls back to a 4 player party', () => {
     const s = setup(); const h = client(s.lobby); h.tx({ t: 'create', size: 99 });
     assert.strictEqual(h.last('joined').room.max, 4);
 });
+test('live views reach the other racers only, with unknown fields stripped', () => {
+    const r = room2(); r.b.tx({ t: 'ready', ready: true }); r.a.tx({ t: 'start' });
+    r.a.inbox.length = 0; r.b.inbox.length = 0;
+    r.clock.advance(3100);
+    const good = { p: 'walking', k: 2, m: 7, sc: 3, x: 120.5, o: 40, sx: 100, sl: 90, sr: 90, f: 0, w: 55, fk: null, ft: 0, fy: 0 };
+    r.a.tx({ t: 'view', s: Object.assign({ evil: '<script>' }, good) });
+    const got = r.b.last('view');
+    assert.ok(got && got.id === r.a.p.id);
+    assert.strictEqual(got.s.x, 120.5);
+    assert.ok(!('evil' in got.s));
+    assert.ok(!r.a.has('view'), 'sender must not get its own view back');
+});
+test('live views are throttled and malformed ones dropped', () => {
+    const r = room2(); r.b.tx({ t: 'ready', ready: true }); r.a.tx({ t: 'start' });
+    r.clock.advance(3100); r.b.inbox.length = 0;
+    const v = { p: 'walking', k: 1, m: 6, sc: 1, x: 80, o: 0, sx: 50, sl: 60, sr: 90, f: 0, w: 10, fk: null, ft: 0, fy: 0 };
+    r.a.tx({ t: 'view', s: v }); r.a.tx({ t: 'view', s: v }); r.a.tx({ t: 'view', s: v });
+    assert.strictEqual(r.b.inbox.filter((m) => m.t === 'view').length, 1);
+    r.clock.advance(100);
+    r.a.tx({ t: 'view', s: Object.assign({}, v, { x: 'far' }) });
+    r.a.tx({ t: 'view', s: Object.assign({}, v, { p: 'flying' }) });
+    r.a.tx({ t: 'view', s: Object.assign({}, v, { sl: 1e9 }) });
+    r.a.tx({ t: 'view' });
+    assert.strictEqual(r.b.inbox.filter((m) => m.t === 'view').length, 1);
+});
+test('views are ignored in the lobby and from fallen players', () => {
+    const r = room2();
+    const v = { p: 'waiting', k: 0, m: 5, sc: 0, x: 40, o: 0, sx: 50, sl: 0, sr: 0, f: 0, w: 0, fk: null, ft: 0, fy: 0 };
+    r.a.tx({ t: 'view', s: v });
+    assert.ok(!r.b.has('view'));
+});
+test('a player keeps the hero and stick they joined with', () => {
+    const s = setup(); const h = client(s.lobby); h.tx({ t: 'create', name: 'H', hero: 'jade', stick: 'laser!' });
+    const me = h.last('joined').room.players[0];
+    assert.strictEqual(me.hero, 'jade');
+    assert.strictEqual(me.stick, 'wood');
+});
 test('start needs a host, a friend and everyone ready', () => {
     const r = room2();
     r.b.tx({ t: 'start' }); assert.strictEqual(r.b.last('err').code, 'not-host');

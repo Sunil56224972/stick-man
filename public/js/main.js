@@ -450,6 +450,10 @@
         // Schedule first: a paint error must never freeze the game.
         root.requestAnimationFrame(frame);
         if (mode === 'play') game.update(dt);
+        if (multi.inRoom()) {
+            if (mode === 'play') multi.reportView(game, now);
+            multi.frame(now, dt);
+        }
         renderer.render(game, now, {
             hero: cat.find('heroes', store.data.equipped.hero),
             stick: cat.find('sticks', store.data.equipped.stick),

@@ -14,7 +14,10 @@
     function serverUrl() {
         var param = '';
         try { param = new URLSearchParams(root.location.search).get('server') || ''; } catch (e) { param = ''; }
-        var base = param || (root.SH_CONFIG && root.SH_CONFIG.server) || '';
+        // On localhost the page and its own server are one process: use it, so development and tests
+        // never reach for the hosted server. ?server= still overrides.
+        var local = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(root.location.hostname);
+        var base = param || (local ? '' : (root.SH_CONFIG && root.SH_CONFIG.server)) || '';
         if (!base) return socketScheme() + root.location.host + '/ws';
         base = base.replace(/\/+$/, '');
         if (/^wss?:\/\//.test(base)) return /\/ws$/.test(base) ? base : base + '/ws';

@@ -85,6 +85,9 @@ async function newPlayer(browser, vp, name) {
     check('standings strip shows both players', await A.evaluate(() => document.querySelectorAll('#mp-strip .mp-chip').length) === 2);
     if (SHOOT) { await A.waitForTimeout(500); await A.screenshot({ path: path.join(OUT, 'multi-race.png') }); }
 
+    check('each device shows the other player live', await A.evaluate(() => document.querySelectorAll('#mp-views .mp-tile').length) === 1 && await B.evaluate(() => document.querySelectorAll('#mp-views .mp-tile').length) === 1);
+    check('live panel carries the friend name', await A.evaluate(() => document.querySelector('#mp-views .mp-tile-tag b').textContent) === 'Mira');
+
     // Esc opens the leave prompt without stopping the race
     await B.keyboard.press('Escape');
     check('leave prompt opens, sim keeps running', await B.evaluate(() => !document.getElementById('screen-leave').hidden && SH.debug.getMode() === 'play'));
@@ -100,10 +103,20 @@ async function newPlayer(browser, vp, name) {
     });
     // the bot drives the sim through the same events as a human, so the scores flow to the server
     check('live score reaches the other player', await until(B, () => /\d/.test(document.querySelector('#mp-strip .mp-chip b').textContent) && [...document.querySelectorAll('#mp-strip .mp-chip b')].some((b) => +b.textContent >= 2), null, 12000));
+    // B's panel of A must be replaying A's bridges: same score, hero on the same platform
+    check('friend panel follows my score', await until(B, () => { const v = Object.values(SH.debug.multi.views())[0]; return v && v.game.score >= 2; }, null, 8000));
+    await A.waitForTimeout(400);
+    const sync = await Promise.all([A.evaluate(() => { const g = SH.debug.game; return { x: g.heroX, k: g.round, s: g.score }; }),
+        B.evaluate(() => { const g = Object.values(SH.debug.multi.views())[0].game; return { x: g.heroX, k: g.round, s: g.score }; })]);
+    check('friend panel is in step with the real run', Math.abs(sync[0].x - sync[1].x) < 60 && Math.abs(sync[0].k - sync[1].k) <= 1, JSON.stringify(sync));
+    check('friend panel actually paints', await B.evaluate(() => { const c = document.querySelector('#mp-views canvas'); const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data; let n = 0; for (let i = 3; i < d.length; i += 400) if (d[i] > 0) n++; return n > 50; }));
+    if (SHOOT) await B.screenshot({ path: path.join(OUT, 'multi-race-phone.png') });
+    if (SHOOT) await A.screenshot({ path: path.join(OUT, 'multi-race.png') });
     await A.evaluate(() => clearInterval(window.__bot));
 
     // --- B falls on purpose, A falls too: results
     await B.evaluate(() => { const g = SH.debug.game; g.press(); setTimeout(() => g.release(), 130); });
+    check('a fallen player is greyed out in the live panel', await until(A, () => document.querySelector('#mp-views .mp-tile.is-out') !== null, null, 9000));
     check('a fallen player is marked out on the other screen', await until(A, () => document.querySelectorAll('#mp-strip .mp-chip.is-out').length === 1, null, 9000));
     await A.evaluate(() => { const g = SH.debug.game; const t = setInterval(() => { if (g.phase === 'waiting') { g.press(); setTimeout(() => g.release(), 130); } if (g.phase === 'over') clearInterval(t); }, 20); });
     check('results appear for both', await until(A, () => !document.getElementById('screen-mpresult').hidden, null, 10000) && await until(B, () => !document.getElementById('screen-mpresult').hidden, null, 10000));

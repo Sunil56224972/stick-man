@@ -5,6 +5,7 @@
  * game (npm start, Render, Railway, Fly). Static hosts such as Vercel or
  * GitHub Pages cannot run WebSockets: deploy server.js somewhere that can and
  * put its address here, for example 'stick-hero.onrender.com'.
- * A ?server=host query parameter overrides this for testing.
+ * A ?server=host query parameter overrides this for testing. On localhost this
+ * setting is ignored and the page talks to its own server.
  */
 window.SH_CONFIG = { server: 'https://stick-man-djpy.onrender.com' };

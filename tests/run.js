@@ -516,5 +516,81 @@ test('map feats: Globetrotter at 3 maps, Frequent Flyer needs score 15 off the m
     assert.ok(SH.catalog.evaluateFeats(freshStore(), run('frost')).some((f) => f.id === 'frequent-flyer'));
 });
 
+console.log('\nLive spectating');
+
+// A real player and a ghost on the same seed. The ghost only ever sees snapshots.
+function liveRun(seed, steps, frameMs, sendEvery) {
+    const real = new Game({ seed });
+    const ghost = new Game({ seed, ghost: true });
+    let lastErr = 0, worst = 0, sent = 0, t = 0;
+    const script = [];
+    for (let i = 0; i < steps; i++) script.push(i % 3 === 0 ? 'bad' : 'good');
+    let idx = 0;
+    for (let ms = 0; ms < 60000 && real.phase !== 'over' && idx <= steps; ms += frameMs) {
+        if (real.phase === 'waiting' && idx < steps) {
+            real.press();
+            real._want = script[idx++] === 'good' ? real.idealLength() : real.idealLength() * 0.6;
+        }
+        if (real.phase === 'stretching' && real.currentStick().length >= real._want) real.release();
+        real.update(frameMs);
+        t += frameMs;
+        if (t >= sendEvery) { t = 0; ghost.mirror(real.snapshot()); sent++; }
+        ghost.update(frameMs);
+        if (real.phase === 'walking' && ghost.phase === 'walking') worst = Math.max(worst, Math.abs(real.heroX - ghost.heroX));
+    }
+    ghost.mirror(real.snapshot());
+    return { real, ghost, worst, sent };
+}
+
+test('a ghost follows a real run through every bridge, then the fall', () => {
+    const { real, ghost } = liveRun(4242, 5, 16, 50);
+    assert.strictEqual(real.phase, 'over');
+    for (let i = 0; i < 200; i++) ghost.update(16);
+    assert.strictEqual(ghost.phase, 'over');
+    assert.strictEqual(ghost.score, real.score);
+    assert.strictEqual(ghost.fallKind, real.fallKind);
+});
+
+test('a ghost builds the same course as the player it mirrors', () => {
+    const { real, ghost } = liveRun(99, 3, 16, 50);
+    const n = Math.min(real.platforms.length, ghost.platforms.length);
+    assert.ok(n >= 4);
+    for (let i = 0; i < n; i++) assert.deepStrictEqual(ghost.platforms[i], real.platforms[i]);
+});
+
+test('a ghost stays within a few pixels of the real hero while walking', () => {
+    const { worst } = liveRun(7, 4, 16, 50);
+    assert.ok(worst < 14, 'drifted ' + worst + 'px');
+});
+
+test('a ghost survives dropped snapshots and slow frames', () => {
+    const { real, ghost } = liveRun(31, 4, 33, 250);
+    for (let i = 0; i < 300; i++) ghost.update(33);
+    assert.strictEqual(ghost.score, real.score);
+    assert.strictEqual(ghost.phase, 'over');
+});
+
+test('a ghost ignores stale snapshots and junk', () => {
+    const real = new Game({ seed: 5 }), ghost = new Game({ seed: 5, ghost: true });
+    real.press(); tick(real, 400); real.release(); tick(real, 100);
+    assert.strictEqual(real.phase, 'turning');
+    const early = real.snapshot();
+    until(real, 'walking'); tick(real, 100);
+    ghost.mirror(real.snapshot());
+    const x = ghost.heroX;
+    ghost.mirror(early);
+    assert.strictEqual(ghost.heroX, x);
+    ghost.mirror(null); ghost.mirror({ p: 'nope' });
+    assert.strictEqual(ghost.heroX, x);
+});
+
+test('a ghost never invents scores or platforms on its own', () => {
+    const ghost = new Game({ seed: 8, ghost: true });
+    const made = ghost.made;
+    for (let i = 0; i < 100; i++) ghost.update(16);
+    assert.strictEqual(ghost.score, 0);
+    assert.strictEqual(ghost.made, made);
+});
+
 console.log('\n' + passed + ' passed, ' + failed + ' failed\n');
 process.exit(failed ? 1 : 0);

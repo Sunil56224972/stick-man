@@ -22,6 +22,26 @@ const NAME_MAX = 14;
 const MIN_BRIDGE_MS = 600;      // a bridge cannot be built, crossed and scrolled faster than this
 const AFK_MS = 45000;           // a player who reports nothing for this long is counted out
 const MAX_SCORE = 5000;
+const VIEW_GAP_MS = 40;         // a player's live view is relayed at most 25 times a second
+const PHASES = ['waiting', 'stretching', 'turning', 'walking', 'transitioning', 'falling', 'over'];
+const SKIN = /^[a-z]{2,12}$/;
+
+// A live view is a small snapshot of one player's run. Only known numeric
+// fields are copied across, so a client cannot push anything else to its room.
+function cleanView(s) {
+    if (!s || typeof s !== 'object' || PHASES.indexOf(s.p) < 0) return null;
+    const out = { p: s.p, f: s.f ? 1 : 0, fk: s.fk === 'miss' || s.fk === 'pillar' ? s.fk : null };
+    const num = (key, lo, hi) => {
+        const v = s[key];
+        if (typeof v !== 'number' || !Number.isFinite(v) || v < lo || v > hi) return false;
+        out[key] = v;
+        return true;
+    };
+    const ok = num('k', 0, 2000) && num('m', 1, 2000) && num('sc', 0, MAX_SCORE) && num('x', -1e6, 1e6) &&
+        num('o', -1e6, 1e6) && num('sx', -1e6, 1e6) && num('sl', 0, 400) && num('sr', 0, 200) &&
+        num('w', 0, 1e7) && num('ft', 0, 5000) && num('fy', -1e4, 1e5);
+    return ok ? out : null;
+}
 
 function sanitizeName(raw) {
     let s = typeof raw === 'string' ? raw : '';
@@ -84,7 +104,7 @@ function createLobby(opts) {
             seed: room.seed,
             max: room.max,
             players: room.players.map((p) => ({
-                id: p.id, name: p.name, ready: p.ready, score: p.score,
+                id: p.id, name: p.name, hero: p.hero, stick: p.stick, ready: p.ready, score: p.score,
                 alive: p.alive, connected: p.connected,
                 place: order ? order.indexOf(p) + 1 : 0
             }))
@@ -210,7 +230,7 @@ function createLobby(opts) {
         };
         if (typeof m.map === 'string' && /^[a-z]{2,12}$/.test(m.map)) room.map = m.map;
         rooms.set(code, room);
-        enter(room, p, m.name);
+        enter(room, p, m);
     }
 
     function onJoin(p, m) {
@@ -219,11 +239,15 @@ function createLobby(opts) {
         if (!room) return fail(p, 'no-room', 'No room with that code.');
         if (room.state !== 'lobby') return fail(p, 'started', 'That race has already started.');
         if (room.players.length >= room.max) return fail(p, 'full', 'That room is full.');
-        enter(room, p, m.name);
+        enter(room, p, m);
     }
 
-    function enter(room, p, name) {
+    function enter(room, p, m) {
+        const name = m.name;
         p.room = room;
+        p.hero = typeof m.hero === 'string' && SKIN.test(m.hero) ? m.hero : 'classic';
+        p.stick = typeof m.stick === 'string' && SKIN.test(m.stick) ? m.stick : 'wood';
+        p.lastViewAt = 0;
         p.name = uniqueName(room, name);
         p.ready = false;
         p.score = 0;
@@ -287,6 +311,19 @@ function createLobby(opts) {
         broadcast(room, { t: 'score', id: p.id, score: s }, p);
     }
 
+    // Relays this player's live view to everyone else in the race.
+    function onView(p, m) {
+        const room = p.room;
+        if (!room || room.state !== 'race' || !p.alive) return;
+        const t = now();
+        if (t - p.lastViewAt < VIEW_GAP_MS) return;
+        const s = cleanView(m.s);
+        if (!s) return;
+        p.lastViewAt = t;
+        p.lastSeen = t;
+        broadcast(room, { t: 'view', id: p.id, s: s }, p);
+    }
+
     function onDead(p) {
         const room = p.room;
         if (!room || room.state !== 'race') return;
@@ -302,13 +339,13 @@ function createLobby(opts) {
 
     const HANDLERS = {
         create: onCreate, join: onJoin, leave: onLeave, ready: onReady, map: onMap,
-        start: onStart, score: onScore, dead: onDead, again: onAgain
+        start: onStart, score: onScore, view: onView, dead: onDead, again: onAgain
     };
 
-    // Token bucket: score and heartbeat traffic is about 1/s, so this is generous.
+    // Token bucket: 40 messages a second sustained, which covers ~15 live views a second plus the rest.
     function allow(p) {
         const t = now();
-        p.tokens = Math.min(30, p.tokens + (t - p.tokenAt) * 0.02);
+        p.tokens = Math.min(60, p.tokens + (t - p.tokenAt) * 0.04);
         p.tokenAt = t;
         if (p.tokens < 1) return false;
         p.tokens -= 1;
@@ -318,7 +355,7 @@ function createLobby(opts) {
     function connect(conn) {
         const p = {
             id: nextId++, conn: conn, room: null, name: '', ready: false, score: 0, alive: true,
-            connected: true, outAt: 0, updates: 0, lastSeen: now(), lastScoreAt: 0, tokens: 30, tokenAt: now()
+            connected: true, outAt: 0, updates: 0, lastSeen: now(), lastScoreAt: 0, tokens: 60, tokenAt: now()
         };
         conn.onmessage = (text) => {
             if (!allow(p)) return conn.close(1008);
@@ -343,5 +380,5 @@ function createLobby(opts) {
 
 module.exports = {
     createLobby, sanitizeName, normalizeCode,
-    MAX_PLAYERS, DUEL_PLAYERS, MIN_TO_START, COUNTDOWN_MS, MIN_BRIDGE_MS, AFK_MS
+    MAX_PLAYERS, DUEL_PLAYERS, VIEW_GAP_MS, cleanView, MIN_TO_START, COUNTDOWN_MS, MIN_BRIDGE_MS, AFK_MS
 };

@@ -263,6 +263,17 @@ async function run() {
             return { s: hit(s, sc), g: rs.some((r) => hit(s, r)), vh: innerHeight, bottom: s.bottom };
         });
         check('mp-race: standings clear of score and buttons', !strip.s && !strip.g, JSON.stringify(strip));
+        await fits('mp-views', '#mp-views');
+        const live = await page.evaluate(() => {
+            const t = document.querySelector('#mp-views .mp-tile');
+            if (!t) return { none: true };
+            const r = t.getBoundingClientRect();
+            const hit = (a, b) => a.right > b.left + 1 && a.left < b.right - 1 && a.bottom > b.top + 1 && a.top < b.bottom - 1;
+            const others = ['#hud .score-wrap', '#mp-strip', ...[...document.querySelectorAll('#hud .hud-group')].map((_, i) => '#hud .hud-group:nth-of-type(' + (i + 1) + ')')]
+                .map((q) => document.querySelector(q)).filter(Boolean).map((e) => e.getBoundingClientRect());
+            return { w: r.width, h: r.height, clash: others.some((o) => hit(r, o)), inside: r.left >= 0 && r.right <= innerWidth && r.top >= 0 && r.bottom <= innerHeight };
+        });
+        check('mp-race: live panel is visible, clear of the HUD and big enough to follow', !live.none && !live.clash && live.inside && live.w >= 100 && live.h >= 60, JSON.stringify(live));
         await shot('mp-race');
         const leaveBtn = await page.evaluate(() => { const b = document.getElementById('btn-leave'); const r = b.getBoundingClientRect(); return { vis: !b.hidden, w: r.width, h: r.height, pause: document.getElementById('btn-pause').hidden }; });
         check('mp-race: Leave replaces Pause and Armory', leaveBtn.vis && leaveBtn.pause && leaveBtn.w >= 34 && leaveBtn.h >= 34, JSON.stringify(leaveBtn));
