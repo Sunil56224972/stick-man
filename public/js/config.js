@@ -7,4 +7,4 @@
  * put its address here, for example 'stick-hero.onrender.com'.
  * A ?server=host query parameter overrides this for testing.
  */
-window.SH_CONFIG = { server: '' };
+window.SH_CONFIG = { server: 'https://stick-man-djpy.onrender.com' };
