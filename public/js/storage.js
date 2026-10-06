@@ -19,7 +19,8 @@
             cherries: 0,
             heroes: ['classic'],
             sticks: ['wood'],
-            equipped: { hero: 'classic', stick: 'wood' },
+            maps: ['meadow'],
+            equipped: { hero: 'classic', stick: 'wood', map: 'meadow' },
             sound: true,
             daily: { last: '', streak: 0 },
             feats: {},
@@ -47,12 +48,15 @@
         d.cherries = num(raw.cherries, 0);
         d.heroes = strings(raw.heroes, d.heroes);
         d.sticks = strings(raw.sticks, d.sticks);
+        d.maps = strings(raw.maps, d.maps); // saves from before maps existed just get the starter
         if (d.heroes.indexOf('classic') < 0) d.heroes.unshift('classic');
         if (d.sticks.indexOf('wood') < 0) d.sticks.unshift('wood');
+        if (d.maps.indexOf('meadow') < 0) d.maps.unshift('meadow');
 
         var eq = raw.equipped || {};
         d.equipped.hero = d.heroes.indexOf(eq.hero) >= 0 ? eq.hero : 'classic';
         d.equipped.stick = d.sticks.indexOf(eq.stick) >= 0 ? eq.stick : 'wood';
+        d.equipped.map = d.maps.indexOf(eq.map) >= 0 ? eq.map : 'meadow';
         d.sound = raw.sound !== false;
 
         if (raw.daily && typeof raw.daily === 'object') {

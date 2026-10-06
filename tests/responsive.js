@@ -187,7 +187,7 @@ async function run() {
         // --- armory, every tab
         await page.click('#btn-over-armory');
         await page.waitForTimeout(450);
-        for (const tab of ['heroes', 'sticks', 'records']) {
+        for (const tab of ['heroes', 'sticks', 'maps', 'records']) {
             await page.click('#tab-' + tab);
             await page.waitForTimeout(250);
             await fits('armory/' + tab, '#screen-armory');

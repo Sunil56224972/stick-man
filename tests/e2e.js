@@ -186,8 +186,18 @@ function check(name, ok, extra) {
     await page.click('[data-act="buy"][data-id="bamboo"]');
     check('stick purchase works', await dbg(() => SH.store.owns('sticks', 'bamboo') && SH.store.data.equipped.stick === 'bamboo'));
 
+    await page.click('#tab-maps');
+    check('maps tab shows 6 maps', (await page.locator('#armory-body .card').count()) === 6);
+    await page.waitForTimeout(200);
+    await shot('armory-maps');
+    await dbg(() => { SH.debug.store.data.cherries = 100; SH.debug.store.save(); SH.ui.renderArmory(); });
+    await page.click('[data-act="buy"][data-id="sakura"]');
+    check('map purchase works and equips', await dbg(() => SH.store.owns('maps', 'sakura') && SH.store.data.equipped.map === 'sakura'));
+    await page.click('[data-act="equip"][data-id="meadow"]');
+    check('map equip swaps the active map', (await dbg(() => SH.store.data.equipped.map)) === 'meadow');
+
     await page.click('#tab-records');
-    check('records tab shows stats and feats', (await page.locator('.stat').count()) === 6 && (await page.locator('.feat').count()) === 10);
+    check('records tab shows stats and feats', (await page.locator('.stat').count()) === 6 && (await page.locator('.feat').count()) === 12);
     await page.waitForTimeout(100);
     await shot('armory-records');
 

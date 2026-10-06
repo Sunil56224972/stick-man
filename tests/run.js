@@ -11,7 +11,7 @@ const vm = require('vm');
 const sandbox = { console, Math, JSON, Date, Object, Array, Number, String, isFinite };
 sandbox.globalThis = sandbox;
 vm.createContext(sandbox);
-['storage', 'catalog', 'game'].forEach((name) => {
+['storage', 'maps', 'catalog', 'game'].forEach((name) => {
     const file = path.join(__dirname, '..', 'public', 'js', name + '.js');
     vm.runInContext(fs.readFileSync(file, 'utf8'), sandbox, { filename: file });
 });
@@ -421,7 +421,7 @@ test('streak bonus is capped', () => {
 console.log('\nCatalog and feats');
 
 test('all ids are unique and every starter is free', () => {
-    ['heroes', 'sticks'].forEach((t) => {
+    ['heroes', 'sticks', 'maps'].forEach((t) => {
         const ids = SH.catalog[t].map((x) => x.id);
         assert.strictEqual(new Set(ids).size, ids.length);
         assert.strictEqual(SH.catalog[t][0].cost, 0);
@@ -445,6 +445,75 @@ test('stats-based feats use lifetime totals', () => {
     s.data.stats.games = 10;
     const got = SH.catalog.evaluateFeats(s, null).map((f) => f.id);
     assert.strictEqual(JSON.stringify(got), '["regular"]');
+});
+
+console.log('\nMaps');
+
+const PAL_KEYS = ['skyTop', 'skyBot', 'far', 'mid', 'near', 'pillar', 'rim', 'tree', 'cloud', 'mist', 'accent'];
+const PILLARS = ['brick', 'lacquer', 'sandstone', 'ice', 'neon', 'basalt'];
+const WEATHER = ['petals', 'snow', 'embers', 'dust', 'rain', 'fireflies'];
+const SHAPES = ['rolling', 'peaks', 'volcano', 'mesa', 'dunes', 'skyline'];
+
+test('there are six maps and the first is the free default', () => {
+    assert.strictEqual(SH.maps.length, 6);
+    assert.strictEqual(SH.maps[0].id, 'meadow');
+    assert.strictEqual(SH.maps[0].cost, 0);
+});
+
+test('every map defines three full palettes of valid hex colours', () => {
+    SH.maps.forEach((m) => {
+        assert.strictEqual(m.themes.length, 3, m.id);
+        m.themes.forEach((th) => PAL_KEYS.forEach((k) => {
+            assert.ok(/^#[0-9a-f]{6}$/i.test(th[k]), m.id + ' ' + k + ' = ' + th[k]);
+        }));
+    });
+});
+
+test('every map uses a known pillar, weather and ridge shape', () => {
+    SH.maps.forEach((m) => {
+        assert.ok(PILLARS.includes(m.pillar), m.id + ' pillar ' + m.pillar);
+        assert.ok(WEATHER.includes(m.weather), m.id + ' weather ' + m.weather);
+        assert.strictEqual(m.layers.length, 3, m.id);
+        m.layers.forEach((L) => {
+            assert.ok(SHAPES.includes(L.shape), m.id + ' shape ' + L.shape);
+            assert.ok(['far', 'mid', 'near'].includes(L.color));
+        });
+    });
+});
+
+test('maps are priced in ascending order and are all distinct', () => {
+    const costs = SH.maps.map((m) => m.cost);
+    assert.strictEqual(JSON.stringify(costs), JSON.stringify(costs.slice().sort((a, b) => a - b)));
+    assert.strictEqual(new Set(SH.maps.map((m) => m.pillar)).size, 6);
+    assert.strictEqual(new Set(SH.maps.map((m) => m.weather)).size, 6);
+});
+
+test('catalog resolves maps and falls back to the first for unknown ids', () => {
+    assert.strictEqual(SH.catalog.find('maps', 'frost').name, 'Frozen Peaks');
+    assert.strictEqual(SH.catalog.find('maps', 'nope').id, 'meadow');
+    assert.strictEqual(SH.catalog.slot('maps'), 'map');
+});
+
+test('a save from before maps existed gets the starter map', () => {
+    const d = SH.store._sanitize({ best: 9, heroes: ['classic'], sticks: ['wood'], equipped: { hero: 'classic', stick: 'wood' } });
+    assert.strictEqual(JSON.stringify(d.maps), '["meadow"]');
+    assert.strictEqual(d.equipped.map, 'meadow');
+});
+
+test('an unowned or unknown equipped map is reset to the starter', () => {
+    const d = SH.store._sanitize({ maps: ['meadow'], equipped: { map: 'volcano' } });
+    assert.strictEqual(d.equipped.map, 'meadow');
+    const e = SH.store._sanitize({ maps: ['meadow', 'volcano'], equipped: { map: 'volcano' } });
+    assert.strictEqual(e.equipped.map, 'volcano');
+});
+
+test('map feats: Globetrotter at 3 maps, Frequent Flyer needs score 15 off the meadow', () => {
+    const s = freshStore();
+    s.data.maps.push('sakura', 'desert');
+    assert.ok(SH.catalog.evaluateFeats(s, null).some((f) => f.id === 'globetrotter'));
+    const run = (map) => ({ score: 16, cherries: 0, perfects: 0, bestCombo: 0, map });
+    assert.ok(!SH.catalog.evaluateFeats(freshStore(), run('meadow')).some((f) => f.id === 'frequent-flyer'));
+    assert.ok(SH.catalog.evaluateFeats(freshStore(), run('frost')).some((f) => f.id === 'frequent-flyer'));
 });
 
 console.log('\n' + passed + ' passed, ' + failed + ' failed\n');

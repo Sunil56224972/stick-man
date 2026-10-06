@@ -207,9 +207,9 @@
     };
 
     function gridHTML(type) {
-        var slot = type === 'heroes' ? 'hero' : 'stick';
+        var slot = cat.slot(type);
         var equipped = store.data.equipped[slot];
-        var out = '<div class="grid">';
+        var out = '<div class="grid' + (type === 'maps' ? ' grid-maps' : '') + '">';
         cat.list(type).forEach(function (item) {
             var owned = store.owns(type, item.id);
             var on = equipped === item.id;
@@ -226,7 +226,7 @@
             }
             out += '<article class="card' + (on ? ' is-equipped' : '') + (owned ? '' : ' is-locked') + '">' +
                 '<span class="rarity rarity-' + r.id + '">' + r.label + '</span>' +
-                '<canvas class="preview ' + (type === 'heroes' ? 'bg-hero' : 'bg-stick') + '" data-type="' + type + '" data-id="' + item.id + '"></canvas>' +
+                '<canvas class="preview ' + (type === 'heroes' ? 'bg-hero' : type === 'sticks' ? 'bg-stick' : 'bg-map') + '" data-type="' + type + '" data-id="' + item.id + '"></canvas>' +
                 '<div class="card-name">' + item.name + '</div>' +
                 '<p class="card-desc">' + item.desc + '</p>' + action + '</article>';
         });
@@ -258,7 +258,7 @@
         var btn = e.target.closest('[data-act]');
         if (!btn) return;
         var act = btn.dataset.act, type = btn.dataset.type, id = btn.dataset.id;
-        var slot = type === 'heroes' ? 'hero' : 'stick';
+        var slot = cat.slot(type);
 
         if (act === 'equip') {
             store.data.equipped[slot] = id;
@@ -319,6 +319,8 @@
             el['armory-body'].querySelectorAll('canvas.preview').forEach(function (cv) {
                 if (cv.dataset.type === 'heroes') {
                     D.previewHero(cv, cat.find('heroes', cv.dataset.id), now, equipped.hero === cv.dataset.id);
+                } else if (cv.dataset.type === 'maps') {
+                    SH.scenery.preview(cv, cat.find('maps', cv.dataset.id), now, cat.find('heroes', equipped.hero));
                 } else {
                     D.previewStick(cv, cat.find('sticks', cv.dataset.id).style, now);
                 }

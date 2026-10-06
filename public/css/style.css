@@ -471,6 +471,8 @@ button:focus-visible, .tab:focus-visible {
 }
 .preview.bg-hero { background: linear-gradient(#cfe8e0, #f6ecd6); }
 .preview.bg-stick { background: linear-gradient(#bfe0ee, #fbf0d6); }
+.preview.bg-map { background: #8fd3e8; aspect-ratio: 1 / .72; }
+.grid-maps .card-desc { min-height: 30px; }
 
 .rarity {
     position: absolute;
@@ -617,7 +619,7 @@ button:focus-visible, .tab:focus-visible {
     .steps { gap: 4px; padding: 10px 8px; }
     .stamp { right: 0; font-size: 17px; }
     .over-score-val { font-size: 64px; }
-    .tab { font-size: 17px; padding: 8px 6px 7px; }
+    .tab { font-size: 15px; padding: 8px 2px 7px; letter-spacing: .2px; }
     .toast { font-size: 14px; }
 }
 @media (max-height: 820px) {

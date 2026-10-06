@@ -10,18 +10,6 @@
     var SH = (root.SH = root.SH || {});
     var D = SH.draw;
 
-    // Day, dusk and night palettes. The renderer blends between neighbours.
-    var THEMES = [
-        { skyTop: '#8fd3e8', skyBot: '#fdf0d5', far: '#b9d9c8', mid: '#8fc487', near: '#62a76d',
-          pillar: '#2a2540', rim: '#4a4466', tree: '#3f8a5a', cloud: '#ffffff', mist: '#1d1b2b' },
-        { skyTop: '#ef8a5c', skyBot: '#ffe2a9', far: '#e0a58f', mid: '#c06a6e', near: '#8f4d66',
-          pillar: '#2c2036', rim: '#5a3f58', tree: '#6d3f5c', cloud: '#ffd3b0', mist: '#2a1830' },
-        { skyTop: '#0e1330', skyBot: '#383a72', far: '#2d3563', mid: '#242b55', near: '#1b2147',
-          pillar: '#12152b', rim: '#2f3566', tree: '#171c3d', cloud: '#5b5f9c', mist: '#070a1c' }
-    ];
-
-    var KEYS = ['skyTop', 'skyBot', 'far', 'mid', 'near', 'pillar', 'rim', 'tree', 'cloud', 'mist'];
-
     function Renderer(canvas) {
         this.canvas = canvas;
         this.themeT = 0;          // 0 day, 1 dusk, 2 night (animated)
@@ -32,15 +20,9 @@
         this.view = { s: 1, originX: 0, groundY: 0, w: 0, h: 0 };
         this.lastNow = 0;
 
-        var i;
-        this.stars = [];
-        for (i = 0; i < 70; i++) {
-            this.stars.push({ x: Math.random(), y: Math.random() * 0.55, r: Math.random() * 1.3 + 0.4, p: Math.random() * 6.28 });
-        }
-        this.clouds = [];
-        for (i = 0; i < 7; i++) {
-            this.clouds.push({ x: Math.random() * 1.4, y: 0.08 + Math.random() * 0.25, s: 0.6 + Math.random() * 0.9, v: 0.004 + Math.random() * 0.006 });
-        }
+        this.scene = SH.scenery.newState();
+        this.weather = new SH.scenery.Weather();
+        this.map = SH.maps[0];
     }
 
     // --- layout ---------------------------------------------------------------
@@ -127,13 +109,8 @@
         var d = target - this.themeT;
         var step = dt * 0.0006;
         this.themeT = Math.abs(d) <= step ? target : this.themeT + Math.sign(d) * step;
-
-        var lo = Math.min(1, Math.floor(this.themeT));
-        var f = this.themeT - lo;
-        var a = THEMES[lo], b = THEMES[Math.min(2, lo + 1)];
-        for (var i = 0; i < KEYS.length; i++) this.palette[KEYS[i]] = D.mix(a[KEYS[i]], b[KEYS[i]], f);
+        this.palette = SH.scenery.palette(this.map, this.themeT);
     };
-
     // --- main entry -----------------------------------------------------------
 
     Renderer.prototype.render = function (game, now, skins) {
@@ -144,6 +121,7 @@
         var ctx = c.ctx;
         if (c.w !== this.view.w || c.h !== this.view.h) this.layout(c.w, c.h);
 
+        this.map = skins.map || SH.maps[0];
         this._stepTheme(game.score, dt);
         this._stepFx(dt);
 
@@ -153,8 +131,8 @@
             ctx.translate((Math.random() - 0.5) * this.shakeMag, (Math.random() - 0.5) * this.shakeMag);
         }
 
-        this._sky(ctx, now);
-        this._hills(ctx, game.offset, now);
+        SH.scenery.sky(ctx, v, pal, this.map, this.themeT, now, this.scene);
+        SH.scenery.hills(ctx, v, pal, this.map, game.offset, this.themeT);
 
         // world space: origin at ground level, y up is negative
         ctx.save();
@@ -170,140 +148,12 @@
         this._texts(ctx);
         ctx.restore();
 
+        // weather falls in front of the scene, behind the HUD
+        var night = Math.max(0, this.themeT - 1);
+        this.weather.step(this.map.weather, v.w, v.h, dt, night);
+        this.weather.draw(ctx, now, night);
+
         ctx.restore();
-    };
-
-    Renderer.prototype._sky = function (ctx, now) {
-        var v = this.view, pal = this.palette, i;
-        var g = ctx.createLinearGradient(0, 0, 0, v.h * 0.78);
-        g.addColorStop(0, pal.skyTop);
-        g.addColorStop(1, pal.skyBot);
-        ctx.fillStyle = g;
-        ctx.fillRect(-20, -20, v.w + 40, v.h + 40);
-
-        var t = this.themeT;
-        var night = Math.max(0, t - 1);          // 0..1 as night arrives
-        var dusk = 1 - Math.abs(t - 1);          // peaks at dusk
-        dusk = Math.max(0, dusk);
-
-        // stars
-        if (night > 0.01) {
-            for (i = 0; i < this.stars.length; i++) {
-                var st = this.stars[i];
-                var tw = 0.55 + 0.45 * Math.sin(now * 0.002 + st.p);
-                ctx.globalAlpha = night * tw;
-                ctx.fillStyle = '#fff6d6';
-                ctx.beginPath();
-                ctx.arc(st.x * v.w, st.y * v.h, st.r, 0, Math.PI * 2);
-                ctx.fill();
-            }
-            ctx.globalAlpha = 1;
-        }
-
-        // sun slides down into dusk then disappears, moon rises for night
-        var r = Math.max(26, Math.min(v.w, v.h) * 0.07);
-        var sunY = v.h * (0.2 + 0.28 * Math.max(0, Math.min(1, t)));
-        var sunA = t < 1 ? 1 : Math.max(0, 2 - t - 0.2);
-        if (sunA > 0.01) {
-            ctx.globalAlpha = sunA;
-            var sg = ctx.createRadialGradient(v.w * 0.76, sunY, r * 0.2, v.w * 0.76, sunY, r * 2.6);
-            sg.addColorStop(0, 'rgba(255,236,170,.9)');
-            sg.addColorStop(1, 'rgba(255,236,170,0)');
-            ctx.fillStyle = sg;
-            ctx.fillRect(v.w * 0.76 - r * 3, sunY - r * 3, r * 6, r * 6);
-            ctx.fillStyle = dusk > 0.4 ? '#ffd08a' : '#fff1b8';
-            ctx.beginPath();
-            ctx.arc(v.w * 0.76, sunY, r, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.globalAlpha = 1;
-        }
-        if (night > 0.01) {
-            var mx = v.w * 0.8, my = v.h * 0.18 + (1 - night) * 40;
-            ctx.globalAlpha = night;
-            ctx.fillStyle = '#f4efd2';
-            ctx.beginPath();
-            ctx.arc(mx, my, r * 0.8, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.fillStyle = 'rgba(190,185,150,.45)';
-            [[-0.25, -0.2, 0.2], [0.2, 0.15, 0.28], [-0.1, 0.35, 0.13]].forEach(function (k) {
-                ctx.beginPath();
-                ctx.arc(mx + k[0] * r, my + k[1] * r, k[2] * r * 0.8, 0, Math.PI * 2);
-                ctx.fill();
-            });
-            ctx.globalAlpha = 1;
-        }
-
-        // clouds
-        var cloudA = 1 - Math.min(1, night * 0.75);
-        for (i = 0; i < this.clouds.length; i++) {
-            var cl = this.clouds[i];
-            cl.x += cl.v * 0.016;
-            if (cl.x > 1.25) cl.x = -0.25;
-            this._cloud(ctx, cl.x * v.w, cl.y * v.h, 34 * cl.s * (v.s + 0.4), cloudA * 0.85);
-        }
-    };
-
-    Renderer.prototype._cloud = function (ctx, x, y, r, a) {
-        ctx.globalAlpha = a;
-        ctx.fillStyle = this.palette.cloud;
-        ctx.beginPath();
-        ctx.arc(x, y, r * 0.55, 0, Math.PI * 2);
-        ctx.arc(x + r * 0.55, y - r * 0.2, r * 0.7, 0, Math.PI * 2);
-        ctx.arc(x + r * 1.2, y, r * 0.5, 0, Math.PI * 2);
-        ctx.rect(x, y, r * 1.2, r * 0.5);
-        ctx.fill();
-        ctx.globalAlpha = 1;
-    };
-
-    // Three parallax ridges plus pine trees on the nearest one.
-    Renderer.prototype._hills = function (ctx, offset, now) {
-        var v = this.view, pal = this.palette, s = v.s;
-        var base = v.groundY;
-        var layers = [
-            { color: pal.far, y: base - 70 * s, amp: 34 * s, f: 0.011, k: 0.08, seed: 0.0 },
-            { color: pal.mid, y: base - 36 * s, amp: 24 * s, f: 0.017, k: 0.16, seed: 2.1 },
-            { color: pal.near, y: base - 10 * s, amp: 14 * s, f: 0.026, k: 0.3, seed: 4.3 }
-        ];
-        layers.forEach(function (L, idx) {
-            var scroll = offset * s * L.k;
-            ctx.beginPath();
-            ctx.moveTo(0, v.h);
-            for (var x = 0; x <= v.w + 6; x += 6) {
-                var p = x + scroll;
-                var y = L.y - (Math.sin(p * L.f + L.seed) + Math.sin(p * L.f * 2.3 + L.seed * 1.7) * 0.5) * L.amp * 0.6;
-                ctx.lineTo(x, y);
-            }
-            ctx.lineTo(v.w + 6, v.h);
-            ctx.closePath();
-            ctx.fillStyle = L.color;
-            ctx.fill();
-
-            if (idx === 2) {
-                // pines sit on the near ridge at stable hashed positions
-                var spacing = 46 * s;
-                var first = Math.floor(scroll / spacing) - 1;
-                var count = Math.ceil(v.w / spacing) + 3;
-                for (var i = first; i < first + count; i++) {
-                    if (D.hash(i + 3.3) < 0.35) continue;
-                    var tx = i * spacing - scroll + (D.hash(i) - 0.5) * spacing * 0.6;
-                    var p2 = tx + scroll;
-                    var ty = L.y - (Math.sin(p2 * L.f + L.seed) + Math.sin(p2 * L.f * 2.3 + L.seed * 1.7) * 0.5) * L.amp * 0.6;
-                    var h = (22 + D.hash(i * 7.1) * 22) * s;
-                    ctx.fillStyle = pal.tree;
-                    ctx.beginPath();
-                    ctx.moveTo(tx - h * 0.28, ty + 2);
-                    ctx.lineTo(tx, ty - h);
-                    ctx.lineTo(tx + h * 0.28, ty + 2);
-                    ctx.closePath();
-                    ctx.fill();
-                    ctx.beginPath();
-                    ctx.moveTo(tx - h * 0.22, ty - h * 0.35);
-                    ctx.lineTo(tx, ty - h * 1.12);
-                    ctx.lineTo(tx + h * 0.22, ty - h * 0.35);
-                    ctx.fill();
-                }
-            }
-        });
     };
 
     // Darkens the chasm below ground so cherries and the hanging hero read well.
@@ -326,25 +176,11 @@
         var left = game.offset - v.originX / s - 100;
         var right = left + v.w / s + 200;
         var stickRoot = game.currentStick().x;
+        var style = this.map.pillar;
 
         game.platforms.forEach(function (p) {
             if (p.x + p.w < left || p.x > right) return;
-            ctx.fillStyle = pal.pillar;
-            ctx.fillRect(p.x, 0, p.w, depth);
-
-            // lit left edge and top lip
-            ctx.fillStyle = pal.rim;
-            ctx.fillRect(p.x, 0, 3, depth);
-            ctx.fillRect(p.x, 0, p.w, 3);
-
-            // brick courses, deterministic per platform
-            ctx.fillStyle = 'rgba(255,255,255,.05)';
-            for (var y = 14; y < depth; y += 18) ctx.fillRect(p.x + 3, y, p.w - 3, 1.5);
-            ctx.fillStyle = 'rgba(0,0,0,.18)';
-            for (var y2 = 14; y2 < depth; y2 += 18) {
-                var off = D.hash(p.x + y2) * (p.w - 8);
-                ctx.fillRect(p.x + 3 + off, y2 - 18 + 1.5, 1.5, 16.5);
-            }
+            SH.scenery.pillar(ctx, style, pal, p.x, p.w, depth);
 
             // red landing target on platforms still ahead
             if (p.x > stickRoot) {

@@ -129,6 +129,7 @@
         if (run.score > store.data.best) store.data.best = run.score;
         store.save();
 
+        run.map = store.data.equipped.map;
         var feats = cat.evaluateFeats(store, run); // pays rewards and saves
         ui.setCherries(store.data.cherries);
         ui.setBest(store.data.best);
@@ -347,7 +348,8 @@
         if (mode === 'play') game.update(dt);
         renderer.render(game, now, {
             hero: cat.find('heroes', store.data.equipped.hero),
-            stick: cat.find('sticks', store.data.equipped.stick)
+            stick: cat.find('sticks', store.data.equipped.stick),
+            map: cat.find('maps', store.data.equipped.map)
         });
         ui.tick(now);
     }

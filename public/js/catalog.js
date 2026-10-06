@@ -61,10 +61,14 @@
         { id: 'regular',       name: 'Regular',        desc: 'Play 10 runs.',                          reward: 5,
           test: function (d) { return d.stats.games >= 10; } },
         { id: 'wardrobe',      name: 'Wardrobe',       desc: 'Buy 4 cosmetics.',                       reward: 6,
-          test: function (d) { return d.heroes.length + d.sticks.length >= 6; } }
+          test: function (d) { return d.heroes.length + d.sticks.length >= 6; } },
+        { id: 'globetrotter',  name: 'Globetrotter',   desc: 'Unlock 3 maps.',                         reward: 8,
+          test: function (d) { return d.maps.length >= 3; } },
+        { id: 'frequent-flyer', name: 'Frequent Flyer', desc: 'Score 15 on a map other than Pine Meadow.', reward: 10,
+          test: function (d, r) { return r.score >= 15 && !!r.map && r.map !== 'meadow'; } }
     ];
 
-    var EMPTY_RUN = { score: 0, cherries: 0, perfects: 0, bestCombo: 0 };
+    var EMPTY_RUN = { score: 0, cherries: 0, perfects: 0, bestCombo: 0, map: '' };
 
     // Marks newly earned feats, pays their reward and returns them.
     function evaluateFeats(store, run) {
@@ -90,9 +94,11 @@
         feats: FEATS,
         rarity: rarity,
         evaluateFeats: evaluateFeats,
-        list: function (type) { return type === 'heroes' ? HEROES : STICKS; },
+        maps: SH.maps || [],
+        slot: function (type) { return type === 'heroes' ? 'hero' : type === 'sticks' ? 'stick' : 'map'; },
+        list: function (type) { return type === 'heroes' ? HEROES : type === 'sticks' ? STICKS : (SH.maps || []); },
         find: function (type, id) {
-            var list = type === 'heroes' ? HEROES : STICKS;
+            var list = type === 'heroes' ? HEROES : type === 'sticks' ? STICKS : (SH.maps || []);
             for (var i = 0; i < list.length; i++) if (list[i].id === id) return list[i];
             return list[0];
         }

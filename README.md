@@ -10,8 +10,8 @@ A hand-drawn arcade bridge game. Hold to grow a stick, release to drop it, and w
 - Mid-walk gravity flip: tap while crossing a gap to hang under the stick and grab cherries.
 - Perfect drops on the red target pillar marker, with a combo multiplier.
 - Armory with 6 heroes and 6 stick styles, each with a rarity tier, all drawn in code (no image assets).
-- 10 feats that pay out cherries, a Records tab with lifetime stats, and a daily gift with a streak bonus.
-- Day, dusk and night sky that blends as you progress, with parallax hills and pines.
+- 12 feats that pay out cherries, a Records tab with lifetime stats, and a daily gift with a streak bonus.
+- Six maps, each with its own sky, three-layer parallax scenery, pillar material and weather: Pine Meadow (fireflies), Sakura Shrine (petals), Dune Canyon (dust), Frozen Peaks (snow and aurora), Neon Harbor (rain and a lit skyline) and Ember Caldera (embers). Every map blends day, dusk and night as your score climbs, and the armory previews cycle through all three.
 - Fully synthesised soundtrack of effects, no audio files: a creaking bamboo stick that rises in pitch as it grows, wood-on-stone knocks, soft sandal footsteps locked to the leg animation, taiko impacts and koto-style plucks. Everything is tuned to one pentatonic scale, perfect combos climb it, and a temple bell marks dusk and night. Mute with the speaker button or `M`.
 - Fully responsive: phones in portrait and landscape, tablets, laptops and ultrawide monitors. Safe-area insets keep the HUD clear of notches, cards scroll instead of clipping on short screens, and tap targets stay thumb-sized.
 - Works with mouse, touch and keyboard.
@@ -37,6 +37,18 @@ A hand-drawn arcade bridge game. Hold to grow a stick, release to drop it, and w
 | --- | --- | --- | --- |
 | ![Landscape](docs/screenshots/landscape-play.png) | ![Landscape game over](docs/screenshots/landscape-gameover.png) | ![Landscape armory](docs/screenshots/landscape-armory.png) | ![Tablet](docs/screenshots/tablet-title.png) |
 
+### Maps
+
+| Pine Meadow | Sakura Shrine | Dune Canyon |
+| --- | --- | --- |
+| ![Pine Meadow](docs/screenshots/maps/meadow-day.png) | ![Sakura Shrine](docs/screenshots/maps/sakura-day.png) | ![Dune Canyon](docs/screenshots/maps/desert-dusk.png) |
+
+| Frozen Peaks | Neon Harbor | Ember Caldera |
+| --- | --- | --- |
+| ![Frozen Peaks](docs/screenshots/maps/frost-night.png) | ![Neon Harbor](docs/screenshots/maps/neon-night.png) | ![Ember Caldera](docs/screenshots/maps/volcano-dusk.png) |
+
+Maps are bought with cherries in the armory's Maps tab and apply to the next frame you play. Pine Meadow is free.
+
 ## Controls
 
 | Action | Mouse / touch | Keyboard |
@@ -53,7 +65,7 @@ A hand-drawn arcade bridge game. Hold to grow a stick, release to drop it, and w
 - A landing scores 1 point. A perfect drop (stick tip on the red marker) scores `combo x 2`, and the combo grows with each consecutive perfect.
 - Flipping is only allowed while you are over a gap. Arriving at a pillar upside down crashes into it.
 - Cherries hang beneath wide gaps (80 px or more). You can only collect them while flipped.
-- The sky changes at scores 10 (dusk) and 20 (night).
+- The sky changes at scores 10 (dusk) and 20 (night) on every map.
 - The daily gift pays 10 cherries plus 2 per streak day, capped at 22.
 
 ## Run locally
@@ -69,9 +81,9 @@ Then open <http://localhost:8089>. The server only serves the `public/` folder a
 ## Tests
 
 ```bash
-npm test          # 38 unit tests for the game simulation, storage and catalog
-npm run test:e2e  # 57 browser checks (needs the server running and Playwright)
-npm run test:responsive  # 405 layout checks across 12 device sizes
+npm test          # 46 unit tests for the game simulation, storage and catalog
+npm run test:e2e  # 60 browser checks (needs the server running and Playwright)
+npm run test:responsive  # 453 layout checks across 12 device sizes
 ```
 
 The end-to-end suite drives the real UI: starting a run, holding and releasing, flips, cherries, pause, game over, persistence, reset and a phone-sized viewport. It also fails on any console error. The responsive suite loads every screen at 12 sizes (from a 320x568 iPhone SE to a 2560x1080 ultrawide, portrait and landscape) and fails on clipped content, overlapping HUD groups, page scrolling, tap targets under 34 px or a card that does not fit. Set `SHOOT=1` to save screenshots of each. The suites read Playwright from `PLAYWRIGHT_PATH` if set, and regenerates the images in `docs/screenshots/`.
@@ -85,9 +97,11 @@ public/
   assets/           self-hosted fonts and favicon
   js/
     game.js         simulation: physics, rules, difficulty (no DOM, no canvas)
-    renderer.js     canvas scene: sky, parallax, pillars, particles, shake
+    renderer.js     canvas scene: pillars, hero, particles, shake, theme blend
+    scenery.js      per-map sky, ridges, props, pillar materials, weather
+    maps.js         the six maps as data (palettes, layers, pillar, weather)
     draw.js         hero, stick and cherry drawing helpers
-    catalog.js      heroes, sticks, feats, rarity
+    catalog.js      heroes, sticks, feats, rarity, map lookup
     storage.js      versioned save, migration, daily gift
     audio.js        Web Audio sound synthesis
     ui.js           HUD, armory, toasts, dialogs
