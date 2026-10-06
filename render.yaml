@@ -1,0 +1,10 @@
+# One-click deploy: https://render.com -> New -> Blueprint -> pick this repo.
+# Serves the game and the multiplayer WebSocket (/ws) from one Node process.
+services:
+  - type: web
+    name: stick-hero
+    runtime: node
+    plan: free
+    buildCommand: echo "no build step"
+    startCommand: node server.js
+    healthCheckPath: /health

@@ -140,10 +140,15 @@
 
     function connect() {
         setStatus('connecting', 'Connecting...', false);
+        var slow = setTimeout(function () {
+            if (M.state === 'join' && !SH.net.open) setStatus('connecting', 'Waking the server up, this can take up to 30 seconds...', false);
+        }, 3500);
         SH.net.connect().then(function () {
+            clearTimeout(slow);
             if (M.state === 'idle') return;
             setStatus('online', 'Connected', false);
         }, function (err) {
+            clearTimeout(slow);
             if (M.state === 'idle') return;
             setStatus('offline', err && err.code === 'timeout' ? 'The server took too long to answer.' : 'Can\u2019t reach the multiplayer server.', true);
         });

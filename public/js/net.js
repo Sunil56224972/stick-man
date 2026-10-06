@@ -45,7 +45,7 @@
                 detach(ws);
                 try { ws.close(); } catch (e) { /* already closing */ }
                 reject({ code: 'timeout' });
-            }, 6000);
+            }, 30000);   // free hosts sleep when idle and take a while to wake
 
             ws.onopen = function () {
                 if (settled) return;

@@ -76,7 +76,7 @@ Race rules differ slightly from solo play so that it stays fair:
 
 Multiplayer needs a server process, because browsers cannot connect to each other directly. `npm start` runs one: it serves the game and the WebSocket endpoint at `/ws` from the same port, so friends on your network (or through a tunnel such as `ngrok`) can play with nothing else to set up.
 
-For a public game, deploy `server.js` to any Node host that supports WebSockets (Render, Railway, Fly.io, a VPS). Vercel and GitHub Pages serve static files only, so they cannot run the rooms. If you keep the static site there, point it at your Node host in [`public/js/config.js`](public/js/config.js):
+For a public game, the quickest route is Render: **New > Blueprint**, pick this repo, and the included [`render.yaml`](render.yaml) does the rest. Free instances sleep when idle, so the first connection can take up to 30 seconds; the lobby says so while it waits. Any other Node host works too. Deploy `server.js` to any Node host that supports WebSockets (Render, Railway, Fly.io, a VPS). Vercel and GitHub Pages serve static files only, so they cannot run the rooms. If you keep the static site there, point it at your Node host in [`public/js/config.js`](public/js/config.js):
 
 ```js
 window.SH_CONFIG = { server: 'stick-hero.onrender.com' };
