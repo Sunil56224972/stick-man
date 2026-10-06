@@ -12,7 +12,7 @@ A hand-drawn arcade bridge game. Hold to grow a stick, release to drop it, and w
 - Armory with 6 heroes and 6 stick styles, each with a rarity tier, all drawn in code (no image assets).
 - 12 feats that pay out cherries, a Records tab with lifetime stats, and a daily gift with a streak bonus.
 - Six maps, each with its own sky, three-layer parallax scenery, pillar material and weather: Pine Meadow (fireflies), Sakura Shrine (petals), Dune Canyon (dust), Frozen Peaks (snow and aurora), Neon Harbor (rain and a lit skyline) and Ember Caldera (embers). Every map blends day, dusk and night as your score climbs, and the armory previews cycle through all three.
-- Online races, 1 vs 1 or a party of up to four players: create a room, share a 4-letter code or an invite link, pick a map and race the same course. See [Multiplayer](#multiplayer).
+- Online races, 1 vs 1 or a party of up to four players: create a room, share a 4-letter code or an invite link, pick a map and race the same course while watching every rival's run live on your own screen. See [Multiplayer](#multiplayer).
 - Fully synthesised soundtrack of effects, no audio files: a creaking bamboo stick that rises in pitch as it grows, wood-on-stone knocks, soft sandal footsteps locked to the leg animation, taiko impacts and koto-style plucks. Everything is tuned to one pentatonic scale, perfect combos climb it, and a temple bell marks dusk and night. Mute with the speaker button or `M`.
 - Fully responsive: phones in portrait and landscape, tablets, laptops and ultrawide monitors. Safe-area insets keep the HUD clear of notches, cards scroll instead of clipping on short screens, and tap targets stay thumb-sized.
 - Works with mouse, touch and keyboard.
@@ -54,16 +54,19 @@ Maps are bought with cherries in the armory's Maps tab and apply to the next fra
 
 Press **Friends** on the title screen.
 
-1. One player enters a name and taps **Create a room**. The lobby shows a 4-letter code and a **Copy link** button.
-2. Friends open the invite link (`?room=ABCD`) or type the code under **or join a friend**. Pick **1 vs 1** (two seats) or **Party** (up to four) before you create the room.
+1. One player enters a name, picks **1 vs 1** (two seats) or **Party** (up to four) and taps **Create a room**. The lobby shows a 4-letter code and a **Copy link** button.
+2. Friends open the invite link (`?room=ABCD`) or type the code under **or join a friend**. A full room turns new players away.
 3. The host picks the map. Everyone else taps **I'm ready**, then the host taps **Start race**.
 4. A 3-2-1 countdown plays, then everyone races the **same seeded course** on their own screen. A strip under the score shows live standings, and a small live panel for every other racer replays their run as it happens: their hero, their bridge, their score. Anyone who falls is greyed out.
 5. When the last player is out the results card ranks everyone by score. A tie goes to whoever stopped scoring first. **Rematch** returns the room to the lobby.
 
-| Screen | Phone |
+| Lobby | Lobby on a phone |
 | --- | --- |
 | ![Lobby](docs/screenshots/multi-lobby-solo.png) | ![Lobby on a phone](docs/screenshots/multi-lobby-phone.png) |
-| ![Race](docs/screenshots/multi-race.png) | ![Results](docs/screenshots/multi-results.png) |
+
+| Race, with the rival's live panel | Race on a phone | Results |
+| --- | --- | --- |
+| ![Race](docs/screenshots/multi-race.png) | ![Race on a phone](docs/screenshots/multi-race-phone.png) | ![Results](docs/screenshots/multi-results.png) |
 
 Race rules differ slightly from solo play so that it stays fair:
 
@@ -71,18 +74,26 @@ Race rules differ slightly from solo play so that it stays fair:
 - A race never pauses. Losing focus only releases the stick, and **Esc** or **Leave** opens a confirm prompt while the race keeps running.
 - Race results do not touch your solo best, stats or cherries.
 - Maps are cosmetic in a room: everyone sees the host's choice whether or not they own it.
+- Live panels show each rival in the hero and stick they have equipped.
 
 ### Hosting it
 
 Multiplayer needs a server process, because browsers cannot connect to each other directly. `npm start` runs one: it serves the game and the WebSocket endpoint at `/ws` from the same port, so friends on your network (or through a tunnel such as `ngrok`) can play with nothing else to set up.
 
-For a public game, the quickest route is Render: **New > Blueprint**, pick this repo, and the included [`render.yaml`](render.yaml) does the rest. Free instances sleep when idle, so the first connection can take up to 30 seconds; the lobby says so while it waits. Any other Node host works too. Deploy `server.js` to any Node host that supports WebSockets (Render, Railway, Fly.io, a VPS). Vercel and GitHub Pages serve static files only, so they cannot run the rooms. If you keep the static site there, point it at your Node host in [`public/js/config.js`](public/js/config.js):
+The live deployment is split in two:
+
+- **Vercel** serves the static game from `public/`. This is the link players open.
+- **Render** runs `server.js`, which hosts the rooms. It was created from the included [`render.yaml`](render.yaml) blueprint (**New > Blueprint**, pick this repo) and exposes `/health` for its health check.
+
+[`public/js/config.js`](public/js/config.js) tells the static site where the rooms live:
 
 ```js
-window.SH_CONFIG = { server: 'stick-hero.onrender.com' };
+window.SH_CONFIG = { server: 'https://stick-man-djpy.onrender.com' };
 ```
 
-You can also test with `?server=host:port` on the URL. When the server cannot be reached, the lobby says so and offers a retry, and the rest of the game works as normal.
+Friends only need the Vercel link: they tap **Friends** and the page connects to Render on its own. Free Render instances sleep when idle, so the first connection after a quiet spell can take up to 30 seconds; the lobby says so while it waits. Pushing to `main` redeploys both hosts, and a multiplayer change is live once both have finished.
+
+Any Node host with WebSocket support works in place of Render (Railway, Fly.io, a VPS). Leave `server` empty when one Node process serves both the page and the rooms. On `localhost` the setting is ignored and the page always talks to its own server, so local development never touches the live rooms. A `?server=host:port` query parameter overrides everything for testing. When the server cannot be reached, the lobby says so and offers a retry, and solo play keeps working.
 
 ### How it works
 
@@ -111,6 +122,7 @@ The server is authoritative for the room: who is in it, who is ready, when the r
 Because scoring is client-reported, this is built for friends, not competitive integrity: a determined cheater could still report a believable score.
 
 ## Controls
+
 | Action | Mouse / touch | Keyboard |
 | --- | --- | --- |
 | Grow the stick | Press and hold | Hold `Space` or `Enter` |
@@ -142,14 +154,16 @@ Then open <http://localhost:8089>. The server serves the `public/` folder (rejec
 ## Tests
 
 ```bash
-npm test          # 46 unit tests for the game simulation, storage and catalog
-npm run test:net  # 29 tests: seeded levels, room rules, WebSocket layer over real sockets
-npm run test:e2e  # 60 browser checks (needs the server running and Playwright)
-npm run test:multi  # 33 checks: two real browsers create, join, race and rematch
-npm run test:responsive  # 753 layout checks across 12 device sizes
+npm test                 # 52 unit tests: simulation, live-panel replay, storage and catalog
+npm run test:net         # 35 tests: seeded levels, room rules, 1 vs 1 rooms, live-view relay, WebSocket layer
+npm run test:e2e         # 60 browser checks (needs the server running and Playwright)
+npm run test:multi       # 39 checks: two real browsers create, join, race, watch each other and rematch
+npm run test:responsive  # 789 layout checks across 12 device sizes
 ```
 
-The multiplayer suite opens two browser windows (one phone-sized) against the real server and checks the lobby, invite link, map sync, countdown, identical courses, live scores, live panels that follow the other player's run, out markers, results and rematch. The end-to-end suite drives the real UI: starting a run, holding and releasing, flips, cherries, pause, game over, persistence, reset and a phone-sized viewport. It also fails on any console error. The responsive suite loads every screen at 12 sizes (from a 320x568 iPhone SE to a 2560x1080 ultrawide, portrait and landscape) and fails on clipped content, overlapping HUD groups, page scrolling, tap targets under 34 px or a card that does not fit. Set `SHOOT=1` to save screenshots of each. The suites read Playwright from `PLAYWRIGHT_PATH` if set, and regenerates the images in `docs/screenshots/`.
+The multiplayer suite opens two browser windows (one phone-sized) against the real server and checks the lobby, invite link, map sync, countdown, identical courses, live scores, live panels that follow the other player's run, out markers, results and rematch. The end-to-end suite drives the real UI: starting a run, holding and releasing, flips, cherries, pause, game over, persistence, reset and a phone-sized viewport. It also fails on any console error. The responsive suite loads every screen at 12 sizes (from a 320x568 iPhone SE to a 2560x1080 ultrawide, portrait and landscape) and fails on clipped content, overlapping HUD groups, live panels covering the HUD, page scrolling, tap targets under 34 px or a card that does not fit.
+
+Set `SHOOT=1` to save screenshots into `docs/screenshots/`. The browser suites load Playwright from `PLAYWRIGHT_PATH` when it is set.
 
 ## Project structure
 
@@ -159,7 +173,7 @@ public/
   css/style.css     paper-cut UI theme
   assets/           self-hosted fonts and favicon
   js/
-    game.js         simulation: physics, rules, difficulty (no DOM, no canvas)
+    game.js         simulation: physics, rules, difficulty, live-panel replay (no DOM, no canvas)
     renderer.js     canvas scene: pillars, hero, particles, shake, theme blend
     scenery.js      per-map sky, ridges, props, pillar materials, weather
     maps.js         the six maps as data (palettes, layers, pillar, weather)
@@ -183,7 +197,7 @@ The simulation in `game.js` is pure logic that emits events (`perfect`, `flip`, 
 
 ## Deploy
 
-The repo includes a `vercel.json` that publishes `public/` with clean URLs. On Vercel, import the repository and keep the defaults. GitHub Pages or Netlify work the same way by pointing them at `public/`. Those hosts give you solo play only; for races, run `server.js` on a Node host and see [Hosting it](#hosting-it).
+The repo includes a `vercel.json` that publishes `public/` with clean URLs. On Vercel, import the repository and keep the defaults. GitHub Pages or Netlify work the same way by pointing them at `public/`. Static hosts cannot run the rooms themselves, so races go through the Node server named in `config.js`; see [Hosting it](#hosting-it).
 
 ## License
 
