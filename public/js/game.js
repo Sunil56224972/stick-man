@@ -27,6 +27,8 @@
         CHERRY_REACH: 16,
         FALL_TIME: 750,       // ms spent falling before the run is over
         GRAVITY: 0.0016,
+        AHEAD_COUNT: 4,       // platforms kept beyond the one the hero stands on
+        AHEAD_DIST: 1200,     // and world px of course kept past its edge, wider than any screen
         STEP_DIST: 56,         // one footfall every 56 px (~4.6 a second); the leg animation is locked to this
     STEP_PHASE: 28         // walkDist at which the first foot lands (mid-swing extreme)
     };
@@ -84,7 +86,7 @@
         this.made = 1;         // platforms generated so far, the start pad included
         this.platforms = [{ x: C.START_X, w: C.START_W }];
         this.cherries = [];
-        for (var i = 0; i < 4; i++) this._addPlatform();
+        this._fill(this.platforms[0]);
 
         var p0 = this.platforms[0];
         this.sticks = [{ x: p0.x + p0.w, length: 0, rotation: 0 }];
@@ -124,6 +126,20 @@
             this.cherries.push({ x: edge + gap / 2 + drift, taken: false });
         }
         this.platforms.push({ x: edge + gap, w: w });
+    };
+
+    // Keeps the course ahead of `from` full. A long stick can skip a platform,
+    // so topping up by count and by distance (not one per landing) means the
+    // next few platforms are always on screen however far a landing jumps.
+    Game.prototype._fill = function (from) {
+        var edge = from.x + from.w;
+        for (var guard = 0; guard < 200; guard++) {
+            var ahead = 0;
+            for (var i = 0; i < this.platforms.length; i++) if (this.platforms[i].x > from.x) ahead++;
+            var last = this.platforms[this.platforms.length - 1];
+            if (ahead >= C.AHEAD_COUNT && last.x + last.w >= edge + C.AHEAD_DIST) return;
+            this._addPlatform();
+        }
     };
 
     Game.prototype.currentStick = function () { return this.sticks[this.sticks.length - 1]; };
@@ -264,7 +280,7 @@
                 this.emit('point', { x: end, bonus: 1 });
             }
             this.emit('score', { score: this.score });
-            if (!this.ghost) this._addPlatform();
+            if (!this.ghost) this._fill(hit);
         } else {
             this.combo = 0;
         }

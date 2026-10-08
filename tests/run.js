@@ -114,10 +114,10 @@ test('the legs hit their widest stride exactly when a footfall fires', () => {
         assert.ok(swing > 0.99, 'foot lands mid-swing (|sin| = ' + swing.toFixed(2) + ')');
     });
 });
-test('starts waiting with 5 platforms and a zero-length stick', () => {
+test('starts waiting with at least 5 platforms and a zero-length stick', () => {
     const { g } = newGame();
     assert.strictEqual(g.phase, 'waiting');
-    assert.strictEqual(g.platforms.length, 5);
+    assert.ok(g.platforms.length >= 5);
     assert.strictEqual(g.currentStick().length, 0);
 });
 
@@ -199,6 +199,29 @@ test('platform generation keeps the lookahead full', () => {
     const { g } = newGame();
     for (let i = 0; i < 6; i++) { playPerfect(g); finishCrossing(g); }
     assert.ok(g.platforms.filter((p) => p.x > g.currentStick().x).length >= 3);
+});
+
+test('skipping a platform with a long stick keeps the course ahead full', () => {
+    const { g } = newGame(11);
+    playPerfect(g); finishCrossing(g);
+    const root = g.currentStick().x;
+    const ahead = g.platforms.filter((p) => p.x > root);
+    const far = ahead[1];
+    stretchTo(g, far.x + far.w / 2 - root);
+    until(g, 'walking');
+    assert.strictEqual(g.target, far, 'the stick should land on the second platform');
+    finishCrossing(g);
+    const now = g.platforms.filter((p) => p.x > far.x);
+    const last = g.platforms[g.platforms.length - 1];
+    assert.ok(now.length >= Game.C.AHEAD_COUNT, 'only ' + now.length + ' platforms ahead');
+    assert.ok(last.x + last.w >= far.x + far.w + Game.C.AHEAD_DIST, 'course ends too close');
+});
+
+test('a fresh course already fills the widest screen', () => {
+    const { g } = newGame(3);
+    const last = g.platforms[g.platforms.length - 1];
+    assert.ok(g.platforms.length - 1 >= Game.C.AHEAD_COUNT);
+    assert.ok(last.x + last.w >= Game.C.START_X + Game.C.START_W + Game.C.AHEAD_DIST);
 });
 
 test('difficulty ramps up but stays bounded', () => {
