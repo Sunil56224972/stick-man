@@ -279,27 +279,33 @@ test('flip is refused before the hero has left the platform', () => {
     assert.ok(events.some((e) => e.n === 'flipDenied'));
 });
 
-test('a flipped hero collects cherries; an upright hero does not', () => {
+test('walking across a bridge collects the cherry above it', () => {
     const { g, events } = newGame();
     startCrossing(g);
-    const sx = g.currentStick().x;
-    g.cherries.push({ x: sx + g.currentStick().length * 0.45, taken: false });
-    const c = g.cherries[g.cherries.length - 1];
+    const c = { x: g.currentStick().x + g.currentStick().length * 0.45, taken: false };
+    g.cherries.push(c);
+    const before = g.cherriesRun;
+    until(g, 'waiting');            // plain walk, no flip
+    assert.strictEqual(c.taken, true);
+    assert.strictEqual(g.cherriesRun, before + 1);
+    assert.ok(events.some((e) => e.n === 'cherry' && e.d.x === c.x));
+});
+
+test('a flipped hero still collects cherries', () => {
+    const { g } = newGame(7);
+    startCrossing(g);
+    const c = { x: g.currentStick().x + g.currentStick().length * 0.45, taken: false };
+    g.cherries.push(c);
     tick(g, 200);
     g.press();                      // flip
     while (g.phase === 'walking' && !c.taken) g.update(8);
     assert.strictEqual(c.taken, true);
     g.press();                      // flip back before the pillar
     until(g, 'waiting');
-    assert.strictEqual(g.cherriesRun >= 1, true);
-    assert.ok(events.some((e) => e.n === 'cherry'));
+});
 
-    const other = newGame(7);
-    startCrossing(other.g);
-    const c2 = { x: other.g.currentStick().x + other.g.currentStick().length * 0.45, taken: false };
-    other.g.cherries.push(c2);
-    until(other.g, 'waiting');      // never flips
-    assert.strictEqual(c2.taken, false);
+test('cherries float above the bridge line', () => {
+    assert.ok(Game.C.CHERRY_Y < 0);
 });
 
 test('arriving still upside down crashes into the pillar', () => {

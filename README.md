@@ -7,7 +7,8 @@ A hand-drawn arcade bridge game. Hold to grow a stick, release to drop it, and w
 ## Features
 
 - Hold-and-release bridge mechanic with a difficulty curve that tightens gaps and narrows pillars as your score climbs.
-- Mid-walk gravity flip: tap while crossing a gap to hang under the stick and grab cherries.
+- Cherries float above wide gaps. Walk through one on your bridge to bank it.
+- Mid-walk gravity flip: tap while crossing a gap to hang under the stick, and flip back before the far pillar.
 - Perfect drops on the red target pillar marker, with a combo multiplier.
 - Armory with 6 heroes and 6 stick styles, each with a rarity tier, all drawn in code (no image assets).
 - 12 feats that pay out cherries, a Records tab with lifetime stats, and a daily gift with a streak bonus.
@@ -137,7 +138,7 @@ Because scoring is client-reported, this is built for friends, not competitive i
 
 - A landing scores 1 point. A perfect drop (stick tip on the red marker) scores `combo x 2`, and the combo grows with each consecutive perfect.
 - Flipping is only allowed while you are over a gap. Arriving at a pillar upside down crashes into it.
-- Cherries hang beneath wide gaps (80 px or more). You can only collect them while flipped.
+- Cherries float above wide gaps (80 px or more). Your bridge has to reach the far pillar; walking across it collects any cherry above it, upright or flipped.
 - The sky changes at scores 10 (dusk) and 20 (night) on every map.
 - The daily gift pays 10 cherries plus 2 per streak day, capped at 22.
 

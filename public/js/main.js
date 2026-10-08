@@ -86,7 +86,7 @@
                 }
                 if (!flipHintShown && store.data.stats.flips === 0 && store.data.stats.games < 4 && d.score >= 1) {
                     flipHintShown = true;
-                    ui.hint('<b>Tap</b> while crossing to flip under the bridge and grab cherries. Flip back before the wall!', 5200);
+                    ui.hint('<b>Tap</b> while crossing to hang under the bridge. Flip back before the wall!', 5200);
                 }
                 break;
             }
@@ -102,8 +102,8 @@
                 sound.cherry();
                 store.addCherries(1);
                 ui.setCherries(store.data.cherries, true);
-                renderer.burst(d.x, 22, 12, COLORS_CHERRY, 0.8);
-                renderer.floatText('+1', d.x, 4, '#ff8a70', 20);
+                renderer.burst(d.x, SH.Game.C.CHERRY_Y, 12, COLORS_CHERRY, 0.8);
+                renderer.floatText('+1', d.x, SH.Game.C.CHERRY_Y - 22, '#ff8a70', 20);
                 break;
             }
 

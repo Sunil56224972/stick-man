@@ -205,13 +205,14 @@
         var left = game.offset - 40, right = game.offset + this.view.w / this.view.s + 40;
         game.cherries.forEach(function (c) {
             if (c.taken || c.x < left || c.x > right) return;
-            // soft glow so they pop against the chasm
-            var g = ctx.createRadialGradient(c.x, 22, 2, c.x, 22, 20);
-            g.addColorStop(0, 'rgba(255,214,120,.45)');
+            // soft glow so they pop against the sky
+            var y = SH.Game.C.CHERRY_Y;
+            var g = ctx.createRadialGradient(c.x, y, 2, c.x, y, 22);
+            g.addColorStop(0, 'rgba(255,214,120,.5)');
             g.addColorStop(1, 'rgba(255,214,120,0)');
             ctx.fillStyle = g;
-            ctx.fillRect(c.x - 20, 2, 40, 40);
-            D.cherry(ctx, c.x, 22, now, 1.15);
+            ctx.fillRect(c.x - 22, y - 22, 44, 44);
+            D.cherry(ctx, c.x, y, now, 1.15);
         });
     };
 

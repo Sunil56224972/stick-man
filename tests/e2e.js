@@ -107,23 +107,26 @@ function check(name, ok, extra) {
     await crossWith(ideal);
     await page.waitForFunction(() => SH.debug.game.phase === 'walking', null, { timeout: 4000 });
     check('perfect drop awards points', (await dbg(() => SH.debug.game.score)) >= 1);
-    // flip once the hero is out over the gap, grab the cherry, flip back before the wall
+    // The cherry floats above the gap: walking upright through it collects it.
     const cherry = await dbg(() => SH.debug.game.cherries.find((c) => c.x > SH.debug.game.currentStick().x));
-    check('a cherry hangs in the gap', !!cherry);
-    await page.waitForFunction(() => SH.debug.game.heroX > SH.debug.game.currentStick().x + 15, null, { polling: 'raf' });
-    const bank0 = await dbg(() => SH.store.data.cherries);
-    await page.mouse.click(640, 300); // flip
-    check('click mid-walk flips the hero', await dbg(() => SH.debug.game.flipped));
-    // Freeze the simulation the moment the cherry is taken so the screenshot (slow) can't
-    // let the hero reach the wall, then flip back.
+    check('a cherry floats over the gap', !!cherry);
+    check('cherry sits above the bridge line', (await dbg(() => SH.Game.C.CHERRY_Y)) < 0);
+    const bank0 = await dbg(() => SH.store.data.cherries - SH.debug.game.cherriesRun);
+    // Freeze the simulation the moment the cherry is taken so the slow screenshot
+    // can't let the hero reach the wall.
     await page.waitForFunction(() => {
         const g = SH.debug.game;
-        if (g.cherriesRun >= 1 && g.flipped) { g._upd = g.update; g.update = function () {}; return true; }
+        if (g.cherriesRun >= 1) { g._upd = g.update; g.update = function () {}; return true; }
         return g.phase !== 'walking';
     }, null, { polling: 'raf', timeout: 5000 });
+    check('walking upright collects the cherry', (await dbg(() => SH.debug.game.flipped)) === false
+        && (await dbg(() => SH.store.data.cherries)) === bank0 + 1);
+    // Still over the gap: flip under the bridge for the screenshot, then flip back.
+    await dbg(() => { const g = SH.debug.game; g.update = g._upd; g._upd = null; g.press(); g.release(); g._upd = g.update; g.update = function () {}; });
+    check('tap mid-walk flips the hero', await dbg(() => SH.debug.game.flipped));
     await shot('flip');
-    await dbg(() => { const g = SH.debug.game; if (g._upd) { g.update = g._upd; g._upd = null; } g.press(); g.release(); });    check('flying under a cherry collects it', (await dbg(() => SH.store.data.cherries)) === bank0 + 1);
-    check('second click flips upright', (await dbg(() => SH.debug.game.flipped)) === false);
+    await dbg(() => { const g = SH.debug.game; g.update = g._upd; g._upd = null; g.press(); g.release(); });
+    check('second tap flips upright', (await dbg(() => SH.debug.game.flipped)) === false);
     await page.waitForFunction(() => SH.debug.game.phase === 'waiting', null, { timeout: 8000 });
     check('crossed safely and ready for next stick', true);
     check('HUD cherry count updated', (await page.textContent('#hud-cherries')) === String(bank0 + 1));

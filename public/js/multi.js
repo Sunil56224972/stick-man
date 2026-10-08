@@ -472,7 +472,7 @@
                     if (name === 'drop') rend.dust(game.currentStick().x + game.currentStick().length, -2, 4);
                     else if (name === 'perfect') rend.burst(d.x, -6, 12, ['#e4472f', '#f4b73a', '#ffffff'], 1);
                     else if (name === 'crash') { rend.shake(6); rend.burst(game.heroX, -16, 14, ['#f6ecd6', '#e4472f'], 1); }
-                    else if (name === 'cherry') rend.burst(d.x, 22, 8, ['#e4472f', '#ff8a70'], 0.7);
+                    else if (name === 'cherry') rend.burst(d.x, SH.Game.C.CHERRY_Y, 8, ['#e4472f', '#ff8a70'], 0.7);
                 }
             });
             views[p.id] = {

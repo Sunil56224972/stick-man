@@ -25,6 +25,7 @@
         STICK_MIN: 4,         // shorter than this counts as an accidental tap
         MAX_DT: 40,           // clamp so a background tab can't teleport the hero
         CHERRY_REACH: 16,
+        CHERRY_Y: -30,      // cherries float at head height above the bridge line
         FALL_TIME: 750,       // ms spent falling before the run is over
         GRAVITY: 0.0016,
         AHEAD_COUNT: 4,       // platforms kept beyond the one the hero stands on
@@ -120,7 +121,7 @@
         var gap = this._rand(Math.floor(d.gapMin), Math.floor(d.gapMax), rng);
         var w = this._rand(Math.floor(d.widthMin), Math.floor(d.widthMax), rng);
 
-        // Cherries hang under the bridge line, only in gaps wide enough to flip in.
+        // Cherries float above the middle of wide gaps, in the hero's path.
         if (gap >= 80 && rng() < 0.6) {
             var drift = (rng() - 0.5) * gap * 0.25;
             this.cherries.push({ x: edge + gap / 2 + drift, taken: false });
@@ -298,14 +299,13 @@
             if (!this.flipped) this.emit('step', { n: idx });
         }
 
-        if (this.flipped) {
-            for (var i = 0; i < this.cherries.length; i++) {
-                var c = this.cherries[i];
-                if (!c.taken && Math.abs(this.heroX - c.x) < C.CHERRY_REACH) {
-                    c.taken = true;
-                    this.cherriesRun++;
-                    this.emit('cherry', { x: c.x });
-                }
+        // Walking (upright or flipped) through a cherry collects it.
+        for (var i = 0; i < this.cherries.length; i++) {
+            var c = this.cherries[i];
+            if (!c.taken && Math.abs(this.heroX - c.x) < C.CHERRY_REACH) {
+                c.taken = true;
+                this.cherriesRun++;
+                this.emit('cherry', { x: c.x });
             }
         }
 
