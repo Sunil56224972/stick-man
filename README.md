@@ -155,9 +155,9 @@ Then open <http://localhost:8089>. The server serves the `public/` folder (rejec
 ## Tests
 
 ```bash
-npm test                 # 52 unit tests: simulation, live-panel replay, storage and catalog
+npm test                 # 56 unit tests: simulation, live-panel replay, storage and catalog
 npm run test:net         # 35 tests: seeded levels, room rules, 1 vs 1 rooms, live-view relay, WebSocket layer
-npm run test:e2e         # 60 browser checks (needs the server running and Playwright)
+npm run test:e2e         # 61 browser checks (needs the server running and Playwright)
 npm run test:multi       # 39 checks: two real browsers create, join, race, watch each other and rematch
 npm run test:responsive  # 789 layout checks across 12 device sizes
 ```
